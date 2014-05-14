@@ -25,7 +25,7 @@ class wss {
 	 * @author Troels Abrahamsen
 	 **/
 	public static function dir(){
-		return dirname(__FILE__);
+		return WOO_SUBSHOPS_DIR;
 	}
 
 
@@ -79,25 +79,6 @@ class wss {
 				require(woo_subshops::dir().'/plugins/'.$dep);
 			}
 		}
-
-	}
-
-
-	/**
-	 * Sets up all admin functionality for this plugin
-	 *
-	 * @return void
-	 * @author Troels Abrahamsen
-	 **/
-	public static function setup_admin(){
-
-		acf_add_options_sub_page(array(
-	        'title' 		=> 'Woocommerce Subshops',
-	        'parent' 		=> 'options-general.php',
-	        'capability' 	=> 'manage_options'
-	    ));
-
-		//require(woo_subshops::dir().'/acf/register_post_types.php');
 
 	}
 

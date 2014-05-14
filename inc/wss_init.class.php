@@ -48,9 +48,11 @@ class wss_init extends wss {
 		add_filter('the_permalink', array('wss_init', 'alter_permalinks'), 999, 3);
 
 		/* Uncomment this to debug */
-		//self::debug();
+		define('WOO_SUBSHOPS_DEV', false);
+		define('WOO_SUBSHOPS_DEBUG', false);
 
 	}
+
 
 	/**
 	 * Outputs information debug information on all the relevant pages
@@ -59,26 +61,25 @@ class wss_init extends wss {
 	 * @author Troels Abrahamsen
 	 **/
 	private static function debug(){
+		if(WOO_SUBSHOPS_DEBUG){
+			add_action('template_include', function($template){
+				global $wp;
+				$mywp = $wp;
+				unset($mywp->public_query_vars, $mywp->private_query_vars, $mywp->extra_query_vars);
+				echo '<pre>';
+				print_r($wp);
+				echo '</pre>';
+				return $template;
+			}, 999);
 
-		define(WOO_SUBSHOP_DEBUG, true);
-
-		add_action('template_include', function($template){
-			global $wp;
-			$mywp = $wp;
-			unset($mywp->public_query_vars, $mywp->private_query_vars, $mywp->extra_query_vars);
-			echo '<pre>';
-			print_r($wp);
-			echo '</pre>';
-			return $template;
-		}, 999);
-
-		add_action('generate_rewrite_rules', function($rules){
-			echo '<pre>';
-			print_r($rules);
-			echo '</pre>';
-			//$rules->flush_rewrite_rules();
-			return $rules;
-		}, 999);
+			add_action('generate_rewrite_rules', function($rules){
+				echo '<pre>';
+				print_r($rules);
+				echo '</pre>';
+				//$rules->flush_rewrite_rules();
+				return $rules;
+			}, 999);
+		}
 	}
 
 
@@ -218,6 +219,9 @@ class wss_init extends wss {
 			if(!$shop = self::get(WOO_SUBSHOP))
 				return $template;
 
+			if(is_single())
+
+
 			if(strpos($template, 'woocommerce/') !== false) {
 				$dirs[] = get_stylesheet_directory().'/subshops/'.$shop->post_name;
 				$dirs[] = get_stylesheet_directory().'/subshops';
@@ -255,6 +259,126 @@ class wss_init extends wss {
 		define('WOO_SUBSHOP_NAME', $shop_name);
 
 	}
+
+	/**
+	 * Sets up all admin functionality for this plugin
+	 *
+	 * @return void
+	 * @author Troels Abrahamsen
+	 **/
+	public static function setup_admin(){
+
+		acf_add_options_sub_page(array(
+	        'title' 		=> 'Woocommerce Subshops',
+	        'slug'			=> 'wss-options-general',
+	        'parent' 		=> 'options-general.php',
+	        'capability' 	=> 'manage_options'
+	    ));
+
+		self::register_acf_fields();
+
+	}
+
+	/**
+	 * 
+	 *
+	 * @return void
+	 * @author Troels Abrahamsen
+	 **/
+	function include_acf_fields(){
+		
+		if(file_exists(self::dir().'/inc/register-acf-fields.php'))
+			require(self::dir().'/inc/register-acf-fields.php');
+
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 * @author Troels Abrahamsen
+	 **/
+	function export_acf_fields(){
+		
+		/* The path to the file that registers the fields */
+		$file 	  = self::dir().'/inc/register-acf-fields.php';
+
+		/* The arguments to get all ACF fields */
+		$get_acfs = array('Woocommerce subshop options');
+		$acfs = array();
+		foreach($get_acfs as $get){
+
+			if($p = get_page_by_title($get, OBJECT, 'acf')){
+				$acfs[] = $p;
+			}
+
+		}
+
+		/* Get fields */
+		if($acfs){
+			/* 
+			Fields where found.
+			Now we need to get an array of their IDs
+			*/
+			foreach($acfs as &$acf){
+				$acf = $acf->ID;
+			}
+
+			/* Require the export class of the ACF plugin if it's not present */
+			if(!class_exists('acf_export')){
+				require_once(self::dir().'/plugins/advanced-custom-fields/core/controllers/export.php');
+			}
+
+			/*
+			This will fool the ACF exporter into believing that
+			a POST request with the fields to export has been made.
+			*/
+			$_POST['acf_posts'] = $acfs;
+			
+			/* New export object */
+			$export = new acf_export();
+
+			/*
+			The html_php method outputs the needed html for the wp-admin
+			area. We capture that with ob_start and split it by html tags
+			in order to find the value of the textarea that holds the PHP
+			code we need. Dirty dirty dirty.
+			*/
+			ini_set('display_errors', 'Off');
+			$buffer = ob_start();
+			$export->html_php();
+			$contents = ob_get_contents();
+			ob_end_clean();
+
+			$contents = preg_split('~readonly="true">~', $contents);
+			$contents = preg_split('~</textarea>~', $contents[1]);
+			$contents = '<?php '.$contents[0].' ?>';
+
+			/* Write the contents to the file */
+			$file = fopen($file, 'w+');
+			fwrite($file, $contents);
+			fclose($file);
+		}
+	}
+
+	/**
+	 * Registers the neccesary ACF field groups and fields
+	 *
+	 * @return void
+	 * @author Troels Abrahamsen
+	 **/
+	public static function register_acf_fields(){
+
+		if(WOO_SUBSHOPS_DEV){
+			self::export_acf_fields();
+		}
+		else{
+			self::include_acf_fields();
+		}
+
+	}
+
 
 	/**
 	 * Registers all the neccesary post_types
