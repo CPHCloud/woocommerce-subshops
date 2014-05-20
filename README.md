@@ -1,4 +1,4 @@
-#woocommerce-subshops
+#Subshops for WooCommerce
 ##Multiple shops on one WooCommerce instance
 
 ###Disclaimer
@@ -10,8 +10,8 @@ WSS lets you handle multiple shops within one instance of WooCommerce. Shops can
 ###Roadmap
 * Testing
 * More testing
-* Tighter integration with backend (Reports per shop, shop filters in orders, etc.)
+* Tighter integration with WP backend (Reports per shop, shop filters in orders, etc.)
 * Lots more
 
-###Want to get involved
+###Want to get involved?
 If you want to contribute to this plugin please submit a pull request or send me a message. All code contributions, constructive comments and general help is greatly appreciated. Thank you :)
