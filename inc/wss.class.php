@@ -150,7 +150,7 @@ class wss {
 	 *
 	 * @return string - the located template
 	 **/
-	public static function locate_template($templates){
+	public static function locate_template($templates, $look_in_self = false){
 
 		if(is_string($templates))
 			$templates = array($templates);
@@ -163,6 +163,10 @@ class wss {
 		}
 
 		$dirs[] = get_stylesheet_directory().'/';
+
+		if($look_in_self){
+			$dirs[] = self::dir().'/templates/';
+		}
 
 		foreach($dirs as $dir){
 			foreach($templates as $template){
@@ -204,6 +208,56 @@ class wss {
 		}
 
 		return $array;
+	}
+
+
+	/**
+	 * Proxy for get_header() that looks for header.php in 'subshops' folder
+	 * of the current theme and includes it if found.
+	 * Falls back to get_header() on non shop.
+	 *
+	 * @return void
+	 **/
+	function get_header($name = false){
+		if($shop = self::get_current_shop()){
+			do_action('get_header');
+			$tmpl = 'header';
+			if($name){
+				$tmpl .= '-'.$name;
+			}
+			$tmpl .= '.php';
+			if($tmpl = self::locate_template($tmpl)){
+				load_template($tmpl);
+			}
+		}
+		else{
+			get_header($name);
+		}
+	}
+
+
+	/**
+	 * Proxy for get_footer() that looks for footer.php in 'subshops' folder
+	 * of the current theme and includes it if found.
+	 * Falls back to get_footer() on non shop.
+	 *
+	 * @return void
+	 **/
+	function get_footer($name = false){
+		if($shop = self::get_current_shop()){
+			do_action('get_footer');
+			$tmpl = 'footer';
+			if($name){
+				$tmpl .= '-'.$name;
+			}
+			$tmpl .= '.php';
+			if($tmpl = self::locate_template($tmpl)){
+				load_template($tmpl);
+			}
+		}
+		else{
+			get_footer($name);
+		}
 	}
 
 }
