@@ -22,7 +22,6 @@ class wss {
 	 * Returns the path to this plugins dir
 	 *
 	 * @return string
-	 * @author Troels Abrahamsen
 	 **/
 	public static function dir(){
 		return WOO_SUBSHOPS_DIR;
@@ -33,12 +32,14 @@ class wss {
 	 * Checks if the current page is a subshop
 	 *
 	 * @return boolean
-	 * @author Troels Abrahamsen
 	 **/
 	public static function is_subshop(){
 
-		if(defined('WOO_SUBSHOP'))
-			return true;
+		if(!is_admin()){
+			if(self::get_current_shop()){
+				return true;
+			}
+		}
 
 		return false;
 	}
@@ -47,7 +48,6 @@ class wss {
 	 * Retrieves the shop base slug as set in the admin area
 	 *
 	 * @return string - the base slug
-	 * @author Troels Abrahamsen
 	 **/
 	public static function get_shop_base(){
 		if(!$base = self::get_option('rewrite_base')){
@@ -62,7 +62,6 @@ class wss {
 	 * from the 'plugins' folder in this plugins dir.
 	 *
 	 * @return void
-	 * @author Troels Abrahamsen
 	 **/
 	public static function load_plugins(){
 
@@ -93,38 +92,39 @@ class wss {
 	 *
 	 * @param  $option - the option key
 	 * @return mixed - the option value
-	 * @author Troels Abrahamsen
 	 **/
 	public static function get_option($option){
 
 		return get_field('wss_'.$option, 'option');
 	}
+	
 
 	/**
 	 * Retreives a list of shops based on arguments or
 	 * a specific shop from either ID or name.
 	 *
 	 * @return mixed - an array of posts or a single shop object
-	 * @author Troels Abrahamsen
 	 **/
 	public static function get($args){
 
 		if(is_string($args) and $args){
-			if($shops = get_posts(array('post_type' => 'woo_subshop', 'page_name' => $args))){
+			if($shops = get_posts(array('post_type' => 'woo_subshop', 'name' => $args))){
 				return $shops[0];
 			}
 		}
-
-		if(is_int($args) and $args > 0){
+		elseif(is_int($args) and $args > 0){
 			return get_post($args);
 		}
-
-		if(!$args){
-			$args = array();
+		else{
+			if(!is_array($args)){
+				$args = array();
+			}
+			$args = array_merge($args, array('post_type' => 'woo_subshop'));
+			return get_posts($args);
 		}
 
-		$args = array_merge($args, array('post_type' => 'woo_subshop'));
-		return get_posts($args);
+		return false;
+
 	}
 
 
@@ -136,15 +136,74 @@ class wss {
 	 *			excessive database requests.
 	 *
 	 * @return mixed - object on succes, false on failure
-	 * @author Troels Abrahamsen
 	 **/
 	public static function get_current_shop(){
 
-		if(WOO_SUBSHOP)
-			if($shop = get_post(WOO_SUBSHOP))
-				return $shop;
+		global $curr_shop;
+		return $curr_shop;
+	}
 
-		return false;
+
+	/**
+	 * Our implementation of locate_template. Used to locate templates
+	 * for subshops specifically.
+	 *
+	 * @return string - the located template
+	 **/
+	public static function locate_template($templates){
+
+		if(is_string($templates))
+			$templates = array($templates);
+
+		$dirs = array();
+
+		if($shop = self::get_current_shop()){
+			$dirs[] = get_stylesheet_directory().'/subshops/'.$shop->post_name.'/';
+			$dirs[] = get_stylesheet_directory().'/subshops/';
+		}
+
+		$dirs[] = get_stylesheet_directory().'/';
+
+		foreach($dirs as $dir){
+			foreach($templates as $template){
+				if(file_exists($dir.$template))
+					return $dir.$template;
+			}
+		}
+	}
+
+
+	/**
+	 * Ouput debug information if the debug constant is set to true
+	 *
+	 * @return void
+	 **/
+	public static function debug($what){
+		if(WOO_SUBSHOPS_DEBUG){
+			echo '<pre>';
+			print_r($what);
+			echo '</pre>';
+		}
+	}
+
+
+	/**
+	 * A utility function that extracts the key-value sets
+	 * defined by keys in $extract.
+	 *
+	 * @param $array (array) - the array to extract from
+	 * @param $extract (array) - and array containing the keys to get
+	 * @return void
+	 **/
+	public static function extract($array, $extract){
+		
+		foreach($array as $k => $v){
+			if(!in_array($k, $extract)){
+				unset($array[$k]);
+			}
+		}
+
+		return $array;
 	}
 
 }
