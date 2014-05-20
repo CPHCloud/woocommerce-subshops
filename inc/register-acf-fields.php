@@ -37,6 +37,14 @@
 					1 => 'future',
 				),
 			),
+			array (
+				'key' => 'field_537b3ad99cbb8',
+				'label' => 'Dev mode',
+				'name' => 'wss_dev_mode',
+				'type' => 'true_false',
+				'message' => '',
+				'default_value' => 0,
+			),
 		),
 		'location' => array (
 			array (
@@ -90,6 +98,61 @@
 		),
 		'options' => array (
 			'position' => 'side',
+			'layout' => 'no_box',
+			'hide_on_screen' => array (
+			),
+		),
+		'menu_order' => 0,
+	));
+	register_field_group(array (
+		'id' => 'acf_wsssubshop',
+		'title' => 'wss:subshop',
+		'fields' => array (
+			array (
+				'key' => 'field_537b1fb1e0668',
+				'label' => 'Private',
+				'name' => 'wss_private',
+				'type' => 'true_false',
+				'message' => '',
+				'default_value' => 0,
+			),
+			array (
+				'key' => 'field_537b20c442d0a',
+				'label' => 'Grant access to these users',
+				'name' => 'wss_users',
+				'type' => 'user',
+				'conditional_logic' => array (
+					'status' => 1,
+					'rules' => array (
+						array (
+							'field' => 'field_537b1fb1e0668',
+							'operator' => '==',
+							'value' => '1',
+						),
+					),
+					'allorany' => 'all',
+				),
+				'role' => array (
+					0 => 'customer',
+					1 => 'shop_manager',
+				),
+				'field_type' => 'multi_select',
+				'allow_null' => 0,
+			),
+		),
+		'location' => array (
+			array (
+				array (
+					'param' => 'post_type',
+					'operator' => '==',
+					'value' => 'woo_subshop',
+					'order_no' => 0,
+					'group_no' => 0,
+				),
+			),
+		),
+		'options' => array (
+			'position' => 'acf_after_title',
 			'layout' => 'no_box',
 			'hide_on_screen' => array (
 			),

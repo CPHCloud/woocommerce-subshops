@@ -69,7 +69,13 @@ class wss_init extends wss {
 		This constant is used to check if the plugin is under development.
 		It is mainly used by the ACF plugin used to create the options panel.
 		*/
-		define('WOO_SUBSHOPS_DEV', true);
+		if(self::get_option('dev_mode')){
+			define('WOO_SUBSHOPS_DEV', true);
+		}
+		else{
+			define('WOO_SUBSHOPS_DEV', false);
+		}
+
 		/* Set this to true to output debug information. */
 		define('WOO_SUBSHOPS_DEBUG', false);
 
@@ -406,6 +412,17 @@ class wss_init extends wss {
 	public static function template_redirects($template){
 		if($shop = self::get_current_shop()){
 
+			/* Lets see if the user has access */
+			if($shop->private){
+				if(is_user_logged_in()){
+					if(!$shop->has_user(get_current_user_id()))
+						return self::locate_template('no-shop-access.php', true);
+				}
+				else {
+					return self::locate_template('no-shop-access.php', true);
+				}
+			}
+
 			/* 
 			We are in a shop.
 			Here we will run a check to see if the pages are assigned
@@ -563,7 +580,7 @@ class wss_init extends wss {
 		$file 	  = self::dir().'/inc/register-acf-fields.php';
 
 		/* The arguments to get all ACF fields */
-		$get_acfs 	= array('wss:options', 'wss:pages');
+		$get_acfs 	= array('wss:options', 'wss:pages', 'wss:subshop');
 		$acfs 		= array();
 		foreach($get_acfs as $get){
 			if($p = get_page_by_title($get, OBJECT, 'acf')){

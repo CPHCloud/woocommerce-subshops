@@ -8,9 +8,9 @@
 class wss_subshop {
 
 	/**
-	 * Runs on construction of the 
+	 * Runs on construction of wss_subshop object
 	 *
-	 * @return voidcu_get_overview_img
+	 * @return void
 	**/
 	function __construct($shop){
 
@@ -39,18 +39,29 @@ class wss_subshop {
 		if($this->object){
 			$this->name = $this->object->post_name;
 		}
+		
+
+		$this->cached_fields = array();
 
 	}
 
 
 	/**
-	 * undocumented function
+	 * getter
 	 *
 	 * @return void
 	 **/
 	function __get($var){
-		if(isset($this->object->$var))
+		if(isset($this->object->$var)){
 			return $this->object->$var;
+		}
+		elseif($value = $this->cached_fields['wss_'.$var]){
+			return $value;
+		}
+		elseif($value = get_field('wss_'.$var, $this->ID)){
+			$this->cached_fields['wss_'.$var] = $value;
+			return $value;
+		}
 		return false;
 	}
 
@@ -67,7 +78,26 @@ class wss_subshop {
 		}
 
 		return false;
+	}
 
+	/**
+	 * Checks if a user has access to this shop.
+	 *
+	 * TODO 	This needs to be reworked in a future version as
+	 * 			it does not scale very well.
+	 *
+	 * @return void
+	 **/
+	function has_user($user_id){
+
+		if($this->users){
+			foreach($this->users as $user) {
+				if($user['ID'] == $user_id)
+					return true;
+			}
+		}
+
+		return false;
 	}
 
 }
