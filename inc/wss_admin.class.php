@@ -13,7 +13,7 @@ class wss_admin extends wss_init {
 	public static function init(){
 
 		/* Sets up the admin screens and options */
-		add_action('init', array('wss_init', 'setup_admin'), 1);
+		add_action('init', array('wss_admin', 'setup_admin'), 1);
 
 		/* Hook the wss_in_shops field for products */
 		add_filter('acf/load_field/name=wss_in_shops', array('wss_admin', 'alter_field_in_shops'), 999, 3);
@@ -98,7 +98,7 @@ class wss_admin extends wss_init {
 		$file 	  = self::dir().'/inc/register-acf-fields.php';
 
 		/* The arguments to get all ACF fields */
-		$get_acfs 	= array('wss:options', 'wss:pages', 'wss:subshop');
+		$get_acfs 	= array('wss:options', 'wss:pages', 'wss:subshop', 'wss:product');
 		$acfs 		= array();
 		foreach($get_acfs as $get){
 			if($p = get_page_by_title($get, OBJECT, 'acf')){
