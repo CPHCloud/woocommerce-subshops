@@ -40,7 +40,7 @@ class wss_init extends wss {
 		add_filter('parse_request', array('wss_init', 'alter_request'), 2);
 
 		/* Filter the request to make sure we point to the right templates */
-		add_action('get_header', array('wss_init', 'alter_query'), 999);
+		add_action('woocommerce_before_shop_loop', array('wss_init', 'alter_query'), 999);
 
 		/* We need to change what templates are used for the subshops */
 		add_filter('template_include', array('wss_init', 'template_redirects'), 999);
@@ -57,6 +57,7 @@ class wss_init extends wss {
 		add_filter('woocommerce_get_remove_url', array('wss_init', 'alter_urls'));
 		add_filter('woocommerce_add_to_cart_url', array('wss_init', 'alter_urls'));
 		add_filter('woocommerce_product_add_to_cart_url', array('wss_init', 'alter_urls'));
+		add_filter('woocommerce_breadcrumb_home_url', array('wss_init', 'alter_urls'));
 		add_filter('add_to_cart_redirect', array('wss_init', 'alter_urls'));
 
 		/* Use our own session handler as opposed to the WC built-in */
@@ -119,22 +120,26 @@ class wss_init extends wss {
 					break;
 				
 				case 'woocommerce_get_checkout_url':
-					$split = '/checkout';
+					$split 		= '/checkout';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 				
 				case 'woocommerce_get_remove_url':
-					$split = '/cart/?remove_item';
+					$split 		= '/cart/?remove_item';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
 				case 'woocommerce_add_to_cart_url':
-					$split = '/';
+					$split 		= '/';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
 				case 'woocommerce_product_add_to_cart_url':
-					$add_vars = array('woo_subshop' => $shop->ID);
+					$add_vars 	= array('woo_subshop' => $shop->ID);
+					break;
+
+				case 'woocommerce_breadcrumb_home_url':
+					$append 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
 				case 'add_to_cart_redirect':
@@ -156,6 +161,15 @@ class wss_init extends wss {
 				*/
 				$parts 	= explode($split, $url);
 				$url  	= $parts[0].$prepend.$split.$append.$parts[1];
+			}
+			elseif($append and $prepend){
+				$url    = $prepend.$url.$append;
+			}
+			elseif($append){
+				$url    = $url.$append;
+			}
+			elseif($prepend){
+				$url    = $prepend.$url;
 			}
 
 			/* Are there any additional query vars defined? */
@@ -333,7 +347,6 @@ class wss_init extends wss {
 	function alter_query(){
 		if(is_post_type_archive('product')){
 			global $wp_query;
-
 			if($shop = self::get_current_shop()){
 				$query = array(
 					'meta_query' => array(
@@ -345,7 +358,7 @@ class wss_init extends wss {
 					)
 				);
 			}
-			else{
+			else{			
 				$query = array(
 					'meta_query' => array(
 						'relation' => 'OR',
@@ -360,12 +373,10 @@ class wss_init extends wss {
 						)
 					)
 				);
-
 			}
-			
+
 			$query = array_merge_recursive($wp_query->query, $query);
 			query_posts($query);
-
 		}	
 	}
 
@@ -391,6 +402,7 @@ class wss_init extends wss {
 		/* Set request for 'product_cat' and 'product_tag' */
 		if($wpq->query_vars['product_cat'] or $wpq->query_vars['product_tag']){
 			$wpq->query_vars = self::extract($wpq->query_vars, array('product_tag', 'product_cat', 'page'));
+			$wpq->query_vars['post_type'] = 'product';
 		}
 		/* Set request for products */
 		elseif($wpq->query_vars['product']){
