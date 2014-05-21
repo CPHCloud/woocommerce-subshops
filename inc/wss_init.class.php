@@ -30,9 +30,6 @@ class wss_init extends wss {
 		/* Register the needed post types - woo_subshop */
 		add_action('init', array('wss_init', 'register_post_types'), 1);
 
-		/* Sets up the admin screens and options */
-		add_action('init', array('wss_init', 'setup_admin'), 1);
-
 		/* Makes sure rewrites are set tup properly */
 		add_action('init', array('wss_init', 'add_rewrites'), 999);
 
@@ -41,6 +38,9 @@ class wss_init extends wss {
 
 		/* Filter the request to make sure we point to the right templates */
 		add_filter('parse_request', array('wss_init', 'alter_request'), 2);
+
+		/* Filter the request to make sure we point to the right templates */
+		add_action('get_header', array('wss_init', 'alter_query'), 999);
 
 		/* We need to change what templates are used for the subshops */
 		add_filter('template_include', array('wss_init', 'template_redirects'), 999);
@@ -65,21 +65,7 @@ class wss_init extends wss {
 		/* Hook the admin ajax url to add the 'woo_subshop' query var */
 		add_filter('admin_url', array('wss_init', 'alter_admin_ajax_url'));
 
-		/*
-		This constant is used to check if the plugin is under development.
-		It is mainly used by the ACF plugin used to create the options panel.
-		*/
-		if(self::get_option('dev_mode')){
-			define('WOO_SUBSHOPS_DEV', true);
-		}
-		else{
-			define('WOO_SUBSHOPS_DEV', false);
-		}
-
-		/* Set this to true to output debug information. */
-		define('WOO_SUBSHOPS_DEBUG', false);
-
-		/* This...well...inits the subshop. Wohoo! */
+		/* This...well...inits the subshop. Woohoo! */
 		self::init_subshop();
 
 	}
@@ -223,7 +209,7 @@ class wss_init extends wss {
 		}
 
 		/* We have a shop name or ID, so now we need check if its valid */
-		if($shop = self::get($shop)){
+		if($shop and $shop = self::get($shop)){
 			/* The shop is valid. Init it. */
 			define('WOO_SUBSHOP', $shop->ID);
 			define('WOO_SUBSHOP_NAME', $shop->post_name);
@@ -340,6 +326,51 @@ class wss_init extends wss {
 
 
 	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_query(){
+		if(is_post_type_archive('product')){
+			global $wp_query;
+
+			if($shop = self::get_current_shop()){
+				$query = array(
+					'meta_query' => array(
+						array(
+							'key' 		=> 'wss_in_shops',
+							'value' 	=> $shop->ID,
+							'compare' 	=> 'LIKE'
+						)
+					)
+				);
+			}
+			else{
+				$query = array(
+					'meta_query' => array(
+						'relation' => 'OR',
+						array(
+							'key' 		=> 'wss_in_shops',
+							'value' 	=> 'main',
+							'compare'	=> 'LIKE'
+						),						
+						array(
+							'key' 		=> 'wss_in_shops',
+							'compare' 	=> 'NOT EXISTS'
+						)
+					)
+				);
+
+			}
+			
+			$query = array_merge_recursive($wp_query->query, $query);
+			query_posts($query);
+
+		}	
+	}
+
+
+	/**
 	 * Alters the request before it is parsed by the query.
 	 * This enables us to clean up and morph requests into 
 	 * the request we really want
@@ -375,7 +406,7 @@ class wss_init extends wss {
 			$wpq->is_single 				= false;
 			$wpq->is_page 					= true;
 		}
-		/* Set requst for shop front pages so it's a product archive instead of a single shop */
+		/* Set reqeust for shop front pages so it's a product archive instead of a single shop */
 		elseif(
 			$wpq->query_vars['woo_subshop']
 			and
@@ -412,6 +443,8 @@ class wss_init extends wss {
 	public static function template_redirects($template){
 		if($shop = self::get_current_shop()){
 
+			/* We are in a shop */
+
 			/* Lets see if the user has access */
 			if($shop->private){
 				if(is_user_logged_in()){
@@ -423,8 +456,15 @@ class wss_init extends wss {
 				}
 			}
 
+			/* Now we check if this is a product page */
+			if(is_single() and get_post_type() == 'product'){
+				global $post;
+				if(!$shop->has_product($post->ID)){
+					return self::get_404();
+				}
+			}
+
 			/* 
-			We are in a shop.
 			Here we will run a check to see if the pages are assigned
 			to the current shop. But first we need to weed out the
 			pages that are set as 'checkout', 'cart' and 'my-account'.
@@ -516,144 +556,6 @@ class wss_init extends wss {
 	function get_404(){
 		self::set_404();
 		return self::locate_template('404.php');
-	}
-
-
-	/**
-	 * Sets up all admin functionality for this plugin
-	 *
-	 * @return void
-	 **/
-	public static function setup_admin(){
-
-		/* Create the options panel */
-		acf_add_options_sub_page(array(
-	        'title' 		=> 'Woocommerce Subshops',
-	        'slug'			=> 'wss-options-general',
-	        'parent' 		=> 'options-general.php',
-	        'capability' 	=> 'manage_options'
-	    ));
-
-		/* Register all the fields! */
-		self::register_acf_fields();
-
-		/* Get published subshops */
-		$shops = get_posts(array(
-			'post_type' 	=> 'woo_subshop',
-			'post_status' 	=> 'publish',
-			'posts_per_page'=> -1
-		));
-
-		/* Register menues for each subshop */
-		foreach($shops as $shop)
-			register_nav_menu('wss-'.$shop->post_name.'-main', 'Main menu for subshop '.$shop->post_title);
-
-
-	}
-
-	/**
-	 * Includes the fields needed by the admin area from the register-acf-fields.
-	 *
-	 * @return void
-	 **/
-	private static function include_acf_fields(){
-		
-		if(file_exists(self::dir().'/inc/register-acf-fields.php'))
-			require(self::dir().'/inc/register-acf-fields.php');
-
-	}
-
-
-	/**
-	 * This function is used in development and will output all the
-	 * needed fields
-	 *
-	 * TODO  	This method currently only works for one developer
-	 *			A method for collectiong the fields across multiple
-	 *			developers and their environments need to be implemented.
-	 *
-	 * @return void
-	 **/
-	private static function export_acf_fields(){
-		
-		/* The path to the file that registers the fields */
-		$file 	  = self::dir().'/inc/register-acf-fields.php';
-
-		/* The arguments to get all ACF fields */
-		$get_acfs 	= array('wss:options', 'wss:pages', 'wss:subshop');
-		$acfs 		= array();
-		foreach($get_acfs as $get){
-			if($p = get_page_by_title($get, OBJECT, 'acf')){
-				$acfs[] = $p;
-			}
-		}
-
-		/* Get fields */
-		if($acfs){
-
-			/* 
-			Fields where found.
-			Now we need to get an array of their IDs
-			*/
-			foreach($acfs as &$acf){
-				$acf = $acf->ID;
-			}
-
-			/* Require the export class of the ACF plugin if it's not present */
-			if(!class_exists('acf_export')){
-				require_once(self::dir().'/plugins/advanced-custom-fields/core/controllers/export.php');
-			}
-
-			/*
-			This will fool the ACF exporter into believing that
-			a POST request with the fields to export has been made.
-			*/
-			$_POST['acf_posts'] = $acfs;
-			
-			/* New export object */
-			$export = new acf_export();
-
-			/*
-			The html_php method outputs the needed html for the wp-admin
-			area. We capture that with ob_start and split it by html tags
-			in order to find the value of the textarea that holds the PHP
-			code we need. Dirty dirty dirty.
-			*/
-			ini_set('display_errors', 'Off');
-			$buffer = ob_start();
-			$export->html_php();
-			
-			unset($_POST['acf_posts']);
-
-			$contents = ob_get_contents();
-			ob_end_clean();
-
-			$contents = preg_split('~readonly="true">~', $contents);
-			$contents = preg_split('~</textarea>~', $contents[1]);
-			$contents = '<?php '.$contents[0].' ?>';
-
-			/* Write the contents to the file */
-			$file = fopen($file, 'w+');
-			fwrite($file, $contents);
-			fclose($file);
-		}
-	}
-
-
-	/**
-	 * Registers the neccesary ACF field groups and fields
-	 *
-	 * @return void
-	 **/
-	public static function register_acf_fields(){
-
-		if(WOO_SUBSHOPS_DEV){
-			self::export_acf_fields();
-		}
-		else{
-			self::include_acf_fields();
-		}
-
 	}
 
 

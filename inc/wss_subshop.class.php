@@ -100,6 +100,28 @@ class wss_subshop {
 		return false;
 	}
 
+
+	/**
+	 * Checks if a product belongs to this shop.
+	 *
+	 * @return void
+	 **/
+	function has_product($product_id){
+
+		if($in_shops = get_field('wss_in_shops', $product_id)){
+			
+			foreach ($in_shops as $k => &$v){
+				$v = $v->ID;
+			}
+
+			if(in_array($this->ID, $in_shops)){
+				return true;
+			}
+			return false;
+		}
+		return false;
+	}
+
 }
 
 

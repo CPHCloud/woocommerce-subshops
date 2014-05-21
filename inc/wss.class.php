@@ -19,6 +19,35 @@ class wss {
 
 
 	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	public static function init(){
+
+		require_once('wss_init.class.php');
+		require_once('wss_admin.class.php');
+		require_once('wss_subshop.class.php');
+
+		wss_admin::init();
+		wss_init::init();
+
+		/*
+		This constant is used to check if the plugin is under development.
+		It is mainly used by the ACF plugin used to create the options panel.
+		*/
+		if(self::get_option('dev_mode')){
+			define('WOO_SUBSHOPS_DEV', true);
+		}
+		else{
+			define('WOO_SUBSHOPS_DEV', false);
+		}
+
+		/* Set this to true to output debug information. */
+		define('WOO_SUBSHOPS_DEBUG', false);
+	}
+
+	/**
 	 * Returns the path to this plugins dir
 	 *
 	 * @return string

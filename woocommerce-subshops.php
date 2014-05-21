@@ -14,9 +14,6 @@ define('WOO_SUBSHOPS_DIR', $__woo_path['dirname']);
 unset($__woo_path);
 
 require('inc/wss.class.php');
-require('inc/wss_init.class.php');
-require('inc/wss_subshop.class.php');
-
-wss_init::init();
+wss::init();
 
 ?>
