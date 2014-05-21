@@ -109,10 +109,6 @@ class wss_subshop {
 	function has_product($product_id){
 
 		if($in_shops = get_field('wss_in_shops', $product_id)){
-			
-			foreach ($in_shops as $k => &$v){
-				$v = $v->ID;
-			}
 
 			if(in_array($this->ID, $in_shops)){
 				return true;
