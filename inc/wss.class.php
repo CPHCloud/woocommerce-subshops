@@ -189,9 +189,13 @@ class wss {
 		if($shop = self::get_current_shop()){
 			$dirs[] = get_stylesheet_directory().'/subshops/'.$shop->post_name.'/';
 			$dirs[] = get_stylesheet_directory().'/subshops/';
+			$dirs[] = get_template_directory().'/subshops/'.$shop->post_name.'/';
+			$dirs[] = get_template_directory().'/subshops/';
+			$dirs = apply_filters('woo_subshops/locate_template_dirs', $dirs, $shop);
 		}
 
 		$dirs[] = get_stylesheet_directory().'/';
+		$dirs[] = get_template_directory().'/';
 
 		if($look_in_self){
 			$dirs[] = self::dir().'/templates/';
