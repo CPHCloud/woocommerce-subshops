@@ -289,7 +289,7 @@ class wss_init extends wss {
 		*/
 
 		/* We're in the admin area. No need to go any further. */
-		if(is_admin())
+		if(is_admin() and (!defined( 'DOING_AJAX' ) or !DOING_AJAX))
 			return null;
 
 		/* First we checkfor the GET vars 'woo_subshop'
