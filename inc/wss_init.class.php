@@ -51,6 +51,8 @@ class wss_init extends wss {
 		/* Alter permalinks */		
 		add_filter('option_woocommerce_permalinks', array('wss_init', 'alter_permalinks_options'));
 
+		add_filter('admin_url', array('wss_init', 'alter_admin_url'));
+
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
 		all the links and urls it produces are pointing to the main shop.
@@ -90,6 +92,19 @@ class wss_init extends wss {
 
 	}
 
+	/**
+	 * Add the woo_subshop argument to all calls to admin-ajax.php
+	 *
+	 * @param $url (string) - the url to parse
+	 * @return string - the parsed url
+	 **/
+	function alter_admin_url($url){
+		if(strpos($url, 'admin-ajax.php') !== false and $shop = self::get_current_shop()){
+		    $url = add_query_arg('woo_subshop', $shop->ID, $url);
+		}
+		return $url;
+	}
+
 
 	/**
 	 * This hooked function takes care of altering the url
@@ -102,8 +117,11 @@ class wss_init extends wss {
 	 **/
 	function alter_params($p){
 		if($shop = self::get_current_shop()){
-			if(isset($p['ajax_url'])){
-				$p['ajax_url'] = add_query_arg('woo_subshop', $shop->ID, $p['ajax_url']);
+			if(isset($p['checkout_url'])){
+				$p['checkout_url'] = add_query_arg('woo_subshop', $shop->ID, $p['checkout_url']);
+			}
+			if(isset($p['cart_url'])){
+				$p['cart_url'] = self::url_inject($p['cart_url'], 'cart/', self::get_shop_base().'/'.$shop->name.'/');
 			}
 
 		}
@@ -131,29 +149,29 @@ class wss_init extends wss {
 				/*
 				In each case of this switch a few variables can be defined.
 				The definition will affect how the URL looks when it returns
-				· $split - Split the url by this string
+				· $inject- Inject at the location of this string in url
 				· $append - If $split is set this will be appended
 				· $prepend - If $split is set this will be prepended
 				· $add_vars - An array containing any extra query vars to add to the url
 				*/
 
 				case 'woocommerce_get_cart_url':
-					$split 		= '/cart';
+					$inject 	= '/cart';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 				
 				case 'woocommerce_get_checkout_url':
-					$split 		= '/checkout';
+					$inject 	= '/checkout';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 				
 				case 'woocommerce_get_remove_url':
-					$split 		= '/cart/?remove_item';
+					$inject 	= '/cart/?remove_item';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
 				case 'woocommerce_add_to_cart_url':
-					$split 		= '/';
+					$inject 		= '/';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
@@ -166,24 +184,23 @@ class wss_init extends wss {
 					break;
 
 				case 'add_to_cart_redirect':
-					$split = '/cart';
+					$inject 	= '/cart';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 				
 				default:
-					$split = false;
+					$inject = false;
 					break;
 			}
 
 			/* Do we need to split the string */
-			if($split){
+			if($inject){
 				/*
-				We do. Explode the URL by the $split string.
+				We do. Explode the URL by the $inject string.
 				Assemble it again with prepending and appending
 				any relevant strings.
 				*/
-				$parts 	= explode($split, $url);
-				$url  	= $parts[0].$prepend.$split.$append.$parts[1];
+				$url  	= self::url_inject($url, $inject, $prepend, $append);
 			}
 			elseif($append and $prepend){
 				$url    = $prepend.$url.$append;
@@ -220,6 +237,21 @@ class wss_init extends wss {
 		return $url;
 	}
 
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function url_inject($url, $inject, $prepend = false, $append = false){
+		$parts 	= explode($inject, $url);
+		if(strpos($url, $inject) === false){
+			/* $inject string does not exist */
+			return $url;
+		}
+		$url 	= $parts[0].$prepend.$inject.$append.$parts[1];
+		return $url;
+	}
 
 	/**
 	 * If a subshop is present we initiate it here.
