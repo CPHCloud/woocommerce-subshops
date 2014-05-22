@@ -45,26 +45,45 @@ class wss_init extends wss {
 		/* We need to change what templates are used for the subshops */
 		add_filter('template_include', array('wss_init', 'template_redirects'), 999);
 
+		/* Use our own session handler as opposed to the WC built-in */
+		add_filter('woocommerce_session_handler', array('wss_init', 'alter_session_handler'), 999);
+
+		/* Alter permalinks */		
+		add_filter('option_woocommerce_permalinks', array('wss_init', 'alter_permalinks_options'));
+
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
 		all the links and urls it produces are pointing to the main shop.
 		These next hooks all take care of filtering the urls and appending
 		the 'shop/{subshop_name}' slug to them.
 		*/
-		add_filter('option_woocommerce_permalinks', array('wss_init', 'alter_permalinks_options'));
-		add_filter('woocommerce_get_cart_url', array('wss_init', 'alter_urls'));
-		add_filter('woocommerce_get_checkout_url', array('wss_init', 'alter_urls'));
-		add_filter('woocommerce_get_remove_url', array('wss_init', 'alter_urls'));
-		add_filter('woocommerce_add_to_cart_url', array('wss_init', 'alter_urls'));
-		add_filter('woocommerce_product_add_to_cart_url', array('wss_init', 'alter_urls'));
-		add_filter('woocommerce_breadcrumb_home_url', array('wss_init', 'alter_urls'));
-		add_filter('add_to_cart_redirect', array('wss_init', 'alter_urls'));
+		$alter_urls_hooks = array(
+			'woocommerce_get_cart_url',
+			'woocommerce_get_checkout_url',
+			'woocommerce_get_remove_url',
+			'woocommerce_add_to_cart_url',
+			'woocommerce_product_add_to_cart_url',
+			'woocommerce_breadcrumb_home_url',
+			'add_to_cart_redirect');
 
-		/* Use our own session handler as opposed to the WC built-in */
-		add_filter('woocommerce_session_handler', array('wss_init', 'alter_session_handler'), 999);
+		foreach($alter_urls_hooks as $hook)
+			add_filter($hook, array('wss_init', 'alter_urls'), 999);
 
-		/* Hook the admin ajax url to add the 'woo_subshop' query var */
-		add_filter('admin_url', array('wss_init', 'alter_admin_ajax_url'));
+
+		/* Add the 'alter_params' filter to all the needed hooks */
+		$alter_params_hooks = array(
+			'woocommerce_params',
+			'wc_single_product_params',
+			'wc_checkout_params',
+			'wc_address_i18n_params',
+			'wc_cart_params',
+			'wc_cart_fragments_params',
+			'wc_add_to_cart_params',
+			'wc_add_to_cart_variation_params',
+			'wc_country_select_params');
+
+		foreach($alter_params_hooks as $hook)
+			add_filter($hook, array('wss_init', 'alter_params'), 999);
 
 		/* This...well...inits the subshop. Woohoo! */
 		self::init_subshop();
@@ -81,10 +100,14 @@ class wss_init extends wss {
 	 * @param $url (string) - the url to parse
 	 * @return string - the parsed url
 	 **/
-	function alter_admin_ajax_url($url){
-		if($shop = self::get_current_shop())
-			$url = add_query_arg('woo_subshop', $shop->ID, $url);
-		return $url;
+	function alter_params($p){
+		if($shop = self::get_current_shop()){
+			if(isset($p['ajax_url'])){
+				$p['ajax_url'] = add_query_arg('woo_subshop', $shop->ID, $p['ajax_url']);
+			}
+
+		}
+		return $p;
 	}
 
 	/**
@@ -177,6 +200,21 @@ class wss_init extends wss {
 				/* Sure is. Add them with add_query_arg() */
 				$url = add_query_arg($add_vars, $url);
 			}
+			
+			/*
+			Sometimes the url is parsed twice through this method
+			which means that the $append or $prepend string could
+			be added twice. So here we preg_replace multiple occurences
+			with only one. There is obviously a better way to do this
+			but this will have to suffice for now.
+			*/
+			if($append){
+				$url = preg_replace('~('.preg_quote($append).')+~i', $append, $url);
+			}
+			if($prepend){
+				$url = preg_replace('~('.preg_quote($prepend).')+~i', $prepend, $url);
+			}
+
 		}
 
 		return $url;
