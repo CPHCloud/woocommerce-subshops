@@ -37,7 +37,6 @@ class wss_admin extends wss_init {
 			if(!update_post_meta($order_id, 'woo_subshop', $shop->ID)){
 				self::log('Could not update the \'woo_subshop\' meta key for order with ID '.$order_id);
 			}
-
 		}
 	}
 

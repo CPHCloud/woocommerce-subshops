@@ -24,6 +24,10 @@ class wss_init extends wss {
 	 **/
 	public static function init(){
 
+		/* Loads */
+
+		add_action('admin_init', array('wss_init', 'admin_init'));
+
 		/* Loads all needed plugins, embedded or already installed */
 		add_action('init', array('wss_init', 'load_plugins'), 1);
 		
@@ -90,6 +94,19 @@ class wss_init extends wss {
 
 		/* This...well...inits the subshop. Woohoo! */
 		self::init_subshop();
+
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function admin_init(){
+
+		require(self::dir().'/inc/admin/wss_orders.class.php');
+		wss_orders::init();
 
 	}
 
@@ -271,11 +288,17 @@ class wss_init extends wss {
 		to be able to init it before Woocommerce starts its engines.
 		*/
 
+		/* We're in the admin area. No need to go any further. */
+		if(is_admin())
+			return null;
+
 		/* First we checkfor the GET vars 'woo_subshop'
 		and use that if it's present. This is neede to support
 		ajax request where the only way of tellign which shop is
 		needed is by using the GET var.
 		*/
+
+
 		if(!$shop = $_GET['woo_subshop']){
 			/* No GET var. We need to find the shopname by the url pattern. */
 			$shoppatt = '~^/'.self::get_shop_base().'/([^/]+)~';
