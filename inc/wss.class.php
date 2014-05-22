@@ -293,6 +293,11 @@ class wss {
 		}
 	}
 
+
+	function log($msg){
+		error_log('WSS plugin: '.$msg);
+	}
+
 }
 
 ?>

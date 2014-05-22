@@ -18,7 +18,29 @@ class wss_admin extends wss_init {
 		/* Hook the wss_in_shops field for products */
 		add_filter('acf/load_field/name=wss_in_shops', array('wss_admin', 'alter_field_in_shops'), 999, 3);
 
+		/* Add shop field to order */
+		add_filter('woocommerce_create_order', array('wss_admin', 'order_add_subshop_field'), 999, 1);
+
+		/* Update the order meta with shop value */
+		add_action('woocommerce_checkout_update_order_meta', array('wss_admin', 'add_subshop_to_order'));
+
+
 	}	
+
+	/**
+	 * Add the woo_subshop meta value to the order
+	 *
+	 * @param $order_id (string) - the order ID
+	 **/
+	function add_subshop_to_order($order_id){
+		if($shop = self::get_current_shop()){
+			if(!update_post_meta($order_id, 'woo_subshop', $shop->ID)){
+				self::log('Could not update the \'woo_subshop\' meta key for order with ID '.$order_id);
+			}
+
+		}
+	}
+
 
 	/**
 	 * Sets up all admin functionality for this plugin

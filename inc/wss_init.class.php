@@ -51,6 +51,7 @@ class wss_init extends wss {
 		/* Alter permalinks */		
 		add_filter('option_woocommerce_permalinks', array('wss_init', 'alter_permalinks_options'));
 
+		/* Add shop query var to admin-url.php */
 		add_filter('admin_url', array('wss_init', 'alter_admin_url'));
 
 		/*
@@ -91,6 +92,7 @@ class wss_init extends wss {
 		self::init_subshop();
 
 	}
+
 
 	/**
 	 * Add the woo_subshop argument to all calls to admin-ajax.php
