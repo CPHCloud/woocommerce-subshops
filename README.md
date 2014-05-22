@@ -8,10 +8,11 @@ This plugin is in heavy development. Please do not use this in any production en
 WSS lets you handle multiple shops within one instance of WooCommerce. Shops can be private or public and products can be assigned to multiple shops.
 
 ###Roadmap
+* Tighter integration with WP backend (Reports per shop, shop filters in orders, etc.)
+* Make it work with permalinks off
 * Testing
 * More testing
-* Tighter integration with WP backend (Reports per shop, shop filters in orders, etc.)
-* Lots more
+* Lots more testing
 
 ###Want to get involved?
 If you want to contribute to this plugin please submit a pull request or send me a message. All code contributions, constructive comments and general help is greatly appreciated. Thank you :)

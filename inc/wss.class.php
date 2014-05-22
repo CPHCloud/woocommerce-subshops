@@ -197,6 +197,7 @@ class wss {
 		$dirs[] = get_stylesheet_directory().'/';
 		$dirs[] = get_template_directory().'/';
 
+
 		if($look_in_self){
 			$dirs[] = self::dir().'/templates/';
 		}
