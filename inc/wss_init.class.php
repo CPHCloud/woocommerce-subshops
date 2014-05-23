@@ -64,7 +64,6 @@ class wss_init extends wss {
 		/* Make the wc_pages work */
 		self::$wc_pages = array('cart', 'checkout', 'myaccount');
 		// foreach(self::$wc_pages as $wc_page)
-		// 	add_filter('woocommerce_get_' . $wc_page . '_page_id', array('wss_init', 'alter_shop_pages_ids'), 999);
 
 		add_filter('page_link', array('wss_init', 'alter_shop_pages_permalinks'), 999, 3);
 
@@ -76,7 +75,7 @@ class wss_init extends wss {
 		the 'shop/{subshop_name}' slug to them.
 		*/
 		$alter_urls_hooks = array(
-			'woocommerce_get_cart_url',
+			//'woocommerce_get_cart_url',
 			'woocommerce_get_checkout_url',
 			'woocommerce_get_remove_url',
 			'woocommerce_add_to_cart_url',
@@ -128,15 +127,17 @@ class wss_init extends wss {
 	 **/
 	function alter_shop_pages_permalinks($url, $page_id){
 	
-		// if(!$shop = self::get_current_shop())
-		// 	return $url;
+		if(!$shop = self::get_current_shop())
+			return $url;
 
-		// if(in_array($page_id, $shop->pages)){
-		// 	if($page = get_post($page_id)){
-		// 		$url = self::url_inject($url, '/'.$page->post_name, '/'.$shop->slug);
-		// 	}
-
-		// }
+		if($key = array_search($page_id, $shop->pages)){
+			if($page = get_post($page_id) and $defpage = get_page(wc_get_page_id($key))) {
+				$url = self::url_inject($url, '/'.$defpage->post_name, '/'.$shop->slug);
+			}
+		}
+		elseif(wc_get_page_id('shop') == $page_id){
+			$url = self::url_inject($url, '/', '/'.$shop->slug);			
+		}
 
 		return $url;
 
@@ -321,10 +322,10 @@ class wss_init extends wss {
 			but this will have to suffice for now.
 			*/
 			if($append){
-				$url = preg_replace('~('.preg_quote($append).')+~i', $append, $url);
+				$url = preg_replace('~('.preg_quote($append).'){2,}~i', $append, $url);
 			}
 			if($prepend){
-				$url = preg_replace('~('.preg_quote($prepend).')+~i', $prepend, $url);
+				$url = preg_replace('~('.preg_quote($prepend).'){2,}~i', $prepend, $url);
 			}
 
 		}
