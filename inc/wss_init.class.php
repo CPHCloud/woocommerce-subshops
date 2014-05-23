@@ -1,5 +1,6 @@
 <?php
 
+
 /*
 *********************************
 wss_init class
@@ -15,6 +16,8 @@ setup of Woocommerce Subshops
 
 class wss_init extends wss {
 
+
+	public static $wc_pages;
 
 	/**
 	 * Takes care of adding all actions and filters to the
@@ -58,6 +61,14 @@ class wss_init extends wss {
 		/* Add shop query var to admin-url.php */
 		add_filter('admin_url', array('wss_init', 'alter_admin_url'));
 
+		/* Make the wc_pages work */
+		self::$wc_pages = array('cart', 'checkout', 'myaccount');
+		// foreach(self::$wc_pages as $wc_page)
+		// 	add_filter('woocommerce_get_' . $wc_page . '_page_id', array('wss_init', 'alter_shop_pages_ids'), 999);
+
+		add_filter('page_link', array('wss_init', 'alter_shop_pages_permalinks'), 999, 3);
+
+
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
 		all the links and urls it produces are pointing to the main shop.
@@ -71,6 +82,10 @@ class wss_init extends wss {
 			'woocommerce_add_to_cart_url',
 			'woocommerce_product_add_to_cart_url',
 			'woocommerce_breadcrumb_home_url',
+			'woocommerce_get_checkout_payment_url',
+			'woocommerce_get_checkout_order_received_url',
+			'woocommerce_get_cancel_order_url',
+			'woocommerce_get_view_order_url',
 			'add_to_cart_redirect');
 
 		foreach($alter_urls_hooks as $hook)
@@ -95,6 +110,62 @@ class wss_init extends wss {
 		/* This...well...inits the subshop. Woohoo! */
 		self::init_subshop();
 
+
+		// add_filter('wp_redirect', function(){
+		// 	$bt = debug_backtrace();
+		// 	echo '<pre>';
+		// 	print_r($bt[3]);
+		// 	echo '</pre>';
+		// });
+
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_shop_pages_permalinks($url, $page_id){
+	
+		// if(!$shop = self::get_current_shop())
+		// 	return $url;
+
+		// if(in_array($page_id, $shop->pages)){
+		// 	if($page = get_post($page_id)){
+		// 		$url = self::url_inject($url, '/'.$page->post_name, '/'.$shop->slug);
+		// 	}
+
+		// }
+
+		return $url;
+
+	}
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_shop_pages_ids($id){
+
+		if(!$shop = self::get_current_shop())
+			return $id;
+
+		$hook = current_filter();
+		foreach(self::$wc_pages as $page){
+
+			if(stripos($hook, $page) === false)
+				continue;
+
+			/* This shop has it's own page replacement for this WC page */
+			if($page_id = $shop->{$page.'_page'}){
+				$id = $page_id;
+			}
+
+		}
+
+		return $id;
 	}
 
 
@@ -191,6 +262,11 @@ class wss_init extends wss {
 
 				case 'woocommerce_add_to_cart_url':
 					$inject 		= '/';
+					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
+					break;
+
+				case 'woocommerce_add_to_cart_url':
+					$inject 		= '/checkout';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
@@ -309,6 +385,9 @@ class wss_init extends wss {
 			}
 		}
 
+		if(!$shop)
+			return null;
+
 		/* Cast the $shop var as either integer or string */
 		if(is_numeric($shop)){
 			$shop = (int)$shop;
@@ -324,6 +403,9 @@ class wss_init extends wss {
 			define('WOO_SUBSHOP_NAME', $shop->post_name);
 			global $curr_shop;
 			$curr_shop = new wss_subshop($shop);
+
+			apply_filters('wss/init_shop', $curr_shop);
+
 		}
 	}
 
@@ -353,7 +435,7 @@ class wss_init extends wss {
 	public static function alter_permalinks_options($permbases){
 		/* Are we in subshop */
 		if($shop = self::get_current_shop()){
-			/* Yes we are. Go thorugh the $permbases */
+			/* Yes we are. Go through the $permbases */
 			foreach($permbases as $name => &$permbase){
 
 				/* If the current base is empty we need to fall back to the defaults. */
@@ -391,7 +473,7 @@ class wss_init extends wss {
 		/* Add page permastruct */
 		add_permastruct('woo_subshop_page', self::get_shop_base().'/%woo_subshop%/%pagename%', array(
 			'with_front'	=> false,
-			'ep_mask'		=> true
+			'ep_mask'		=> EP_PAGES
 		));
 
 	}
@@ -403,7 +485,7 @@ class wss_init extends wss {
 	 **/
 	public static function add_rewrites(){
 
-		global $wp_rewrite;
+		global $wp_rewrite, $woocommerce;
 
 		/* Get structures to add from wp_rewrite woocommerce */
 		$structs = $wp_rewrite->extra_permastructs;
@@ -428,8 +510,8 @@ class wss_init extends wss {
 				$newstruct			= preg_replace('~\/{2,}~', '/', self::get_shop_base().'/%woo_subshop%/'.$structure);
 				add_permastruct('woo_subshop_'.$k, $newstruct, $args);
 			}
-
 		}
+
 
 	}
 
@@ -491,8 +573,10 @@ class wss_init extends wss {
 		self::debug($wpq->query_vars);
 
 		/* Check if this is a subshop. Return if not. */
-		if(!self::is_subshop())
+		if(!$shop = self::get_current_shop())
 			return $wpq;
+
+		global $woocommerce;
 
 		/* Set request for 'product_cat' and 'product_tag' */
 		if($wpq->query_vars['product_cat'] or $wpq->query_vars['product_tag']){
@@ -508,10 +592,35 @@ class wss_init extends wss {
 		}
 		/* Set request for pages */
 		elseif($wpq->query_vars['pagename']){
-			$wpq->query_vars 				= self::extract($wpq->query_vars, array('pagename'));
+			/* This is a page - we need */
+			self::disable_cannonical();
+			$wpq->query_vars 				= self::extract($wpq->query_vars, array_merge(array('pagename'), $woocommerce->query->query_vars));
 			$wpq->is_singular 				= true;
 			$wpq->is_single 				= false;
 			$wpq->is_page 					= true;
+
+			/* Handle request to WC pages - cart, checkout, myaccount, etc. */
+			if($pages = get_posts('post_type=page&pagename='.$wpq->query_vars['pagename'])){
+				$page = $pages[0];
+
+				/*
+				If this is one of the WC pages (cart, checkout, myaccount, etc.) find out
+				if the subshop has registered it's own pages we need to setup instead of the
+				default one.
+				*/
+				$defpages = self::get_wc_default_pages();
+				if($key = array_search($page->ID, $defpages)){
+					if($shop->pages[$key] !== $defpages[$key]){
+						$shopspage = get_page($shop->pages[$key]);
+						$wpq->query_vars['pagename'] = $shopspage->post_name;
+					}
+				}
+				elseif(in_array($page->ID, $shop->pages)){
+					/* Do not access this page. Send information down to template_redirects() */
+					define('WOO_SUBSHOPS_404', true);
+				}
+			}
+
 		}
 		/* Set reqeust for shop front pages so it's a product archive instead of a single shop */
 		elseif(
@@ -538,6 +647,16 @@ class wss_init extends wss {
 
 
 	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function disable_cannonical(){
+		remove_filter('template_redirect', 'redirect_canonical');
+	}
+
+
+	/**
 	 * If any requests in subshop scope need special templates
 	 * other than what WP comes up with, this is where the magic happens.
 	 *
@@ -548,6 +667,10 @@ class wss_init extends wss {
 	 * @return string - the parsed template
 	 **/
 	public static function template_redirects($template){
+
+		if(defined('WOO_SUBSHOPS_404'))
+			return self::get_404();
+
 		if($shop = self::get_current_shop()){
 
 			/* We are in a shop */
@@ -571,17 +694,6 @@ class wss_init extends wss {
 				}
 			}
 
-			/* 
-			Here we will run a check to see if the pages are assigned
-			to the current shop. But first we need to weed out the
-			pages that are set as 'checkout', 'cart' and 'my-account'.
-			Get the pages from Woocommerce */
-			$allowed_pages = array(
-				get_option('woocommerce_checkout_page_id'),
-				get_option('woocommerce_cart_page_id'),
-				get_option('woocommerce_myaccount_page_id')
-			);
-
 			/*
 			First a check to see if this is a page and if
 			we have the proper priveliges to view it.
@@ -600,7 +712,6 @@ class wss_init extends wss {
 				/* We didnt match all rules. Return the 404 template. */
 				return self::get_404();
 			}
-
 
 			/*
 			Now we need to figure out which template to load.
@@ -629,6 +740,7 @@ class wss_init extends wss {
 		}
 		/* Is this a page and NOT a subshop */
 		elseif(is_page()){
+
 			/* Check if page is assigned to a subshop. Return 404 if true. */
 			if($shops = self::get(array('posts_per_page' => '-1'))){
 				foreach($shops as $shop){
@@ -638,6 +750,7 @@ class wss_init extends wss {
 					}
 				}
 			}
+
 		}
 
 		return $template;
@@ -645,7 +758,7 @@ class wss_init extends wss {
 
 
 	/**
-	 * Set to 40 and send status header
+	 * Set to 404 and send status header
 	 *
 	 * @return void
 	 **/
@@ -654,6 +767,7 @@ class wss_init extends wss {
 		$wp_query->set_404();
 		status_header(404);
 	}
+
 
 	/**
 	 * Sets to 404 and retrieves the 404 template

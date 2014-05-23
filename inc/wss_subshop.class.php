@@ -40,6 +40,15 @@ class wss_subshop {
 			$this->name = $this->object->post_name;
 		}
 		
+		$this->slug = wss::get_shop_base().'/'.$this->object->post_name;
+
+		$this->pages = array(
+			'cart' 		=> $this->get_page_id('cart'),
+			'checkout' 	=> $this->get_page_id('checkout'),
+			'myaccount' => $this->get_page_id('myaccount')
+		);
+
+		//aprint($this);
 
 		$this->cached_fields = array();
 
@@ -72,13 +81,18 @@ class wss_subshop {
 	 **/
 	function has_page($page_id){
 
-		if($shop = get_field('wss_in_subshop', $page_id)){
+		/* First we check if the */
+		if(in_array($page_id, $this->pages)){
+			return true;
+		}
+		elseif($shop = get_field('wss_in_subshop', $page_id)){
 			if($shop->ID == $this->ID)
 				return true;
 		}
 
 		return false;
 	}
+
 
 	/**
 	 * Checks if a user has access to this shop.
@@ -117,6 +131,22 @@ class wss_subshop {
 		}
 		return false;
 	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function get_page_id($pagename){
+
+		if($page = $this->{$pagename.'_page'}){
+			return $page->ID;
+		}
+		return get_option('woocommerce_'.$pagename.'_page_id');
+
+	}
+
 
 }
 

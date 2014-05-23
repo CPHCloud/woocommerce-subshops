@@ -104,7 +104,7 @@ class wss {
 			if(!is_plugin_active($dep)){
 				if($dep == 'advanced-custom-fields/acf.php')
 					define('ACF_LITE', true);
-				require(woo_subshops::dir().'/plugins/'.$dep);
+				require(self::dir().'/plugins/'.$dep);
 			}
 		}
 
@@ -167,7 +167,6 @@ class wss {
 	 * @return mixed - object on succes, false on failure
 	 **/
 	public static function get_current_shop(){
-
 		global $curr_shop;
 		return $curr_shop;
 	}
@@ -191,8 +190,9 @@ class wss {
 			$dirs[] = get_stylesheet_directory().'/subshops/';
 			$dirs[] = get_template_directory().'/subshops/'.$shop->post_name.'/';
 			$dirs[] = get_template_directory().'/subshops/';
-			$dirs = apply_filters('woo_subshops/locate_template_dirs', $dirs, $shop);
 		}
+
+		$dirs 	= apply_filters('wss/locate_template_dirs', $dirs, $shop);
 
 		$dirs[] = get_stylesheet_directory().'/';
 		$dirs[] = get_template_directory().'/';
@@ -292,6 +292,22 @@ class wss {
 		else{
 			get_footer($name);
 		}
+	}
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function get_wc_default_pages(){
+
+		$def = array(
+			'cart' 		=> get_option('woocommerce_cart_page_id'),
+			'checkout' 	=> get_option('woocommerce_checkout_page_id'),
+			'myaccount' => get_option('woocommerce_myaccount_page_id')
+		);
+
+		return $def;
 	}
 
 
