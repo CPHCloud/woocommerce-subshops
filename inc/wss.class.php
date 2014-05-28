@@ -97,6 +97,8 @@ class wss {
 		/* Check if the needed plugins are already loaded */
 		$deps[] 	= 'advanced-custom-fields/acf.php';
 		$deps[] 	= 'acf-options-page/acf-options-page.php';
+		$deps[] 	= 'acf-flexible-content/acf-flexible-content.php';
+		$deps[] 	= 'acf-repeater/acf-repeater.php';
 		$deps[] 	= 'validated-field-for-acf/validated_field.php';
 
 		include_once( ABSPATH . 'wp-admin/includes/plugin.php');
