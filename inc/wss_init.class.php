@@ -28,11 +28,7 @@ class wss_init extends wss {
 	public static function init(){
 
 		/* Loads */
-
 		add_action('admin_init', array('wss_init', 'admin_init'));
-
-		/* Loads all needed plugins, embedded or already installed */
-		add_action('init', array('wss_init', 'load_plugins'), 1);
 		
 		/* Register the needed post types - woo_subshop */
 		add_action('init', array('wss_init', 'register_post_types'), 1);

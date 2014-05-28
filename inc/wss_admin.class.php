@@ -24,15 +24,35 @@ class wss_admin extends wss_init {
 		/* Update the order meta with shop value */
 		add_action('woocommerce_checkout_update_order_meta', array('wss_admin', 'add_subshop_to_order'));
 
-		add_action( 'admin_head', function(){
-			global $pagenow, $post;
-			if($pagenow == 'post.php' and get_post_type($post) == 'woo_subshop'){
-				echo '<style>#minor-publishing{ display: none;}</style>';
-			}
-		});
+		add_action('admin_head', array('wss_admin', 'hide_publish_info'));
+		add_filter('acf/fields/flexible_content/no_value_message', array('wss_admin', 'alter_flexcontent_text'));
 
 	}	
 
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_flexcontent_text($text){
+		global $pagenow, $post;
+		if($pagenow == 'post.php' and get_post_type() == 'woo_subshop'){
+			$text = 'Click the "Add element" button to start adding layout fields';
+		}
+		return $text;
+	}
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function hide_publish_info(){
+		global $pagenow, $post;
+		if($pagenow == 'post.php' and get_post_type($post) == 'woo_subshop'){
+			echo '<style>#minor-publishing{ display: none;}</style>';
+		}
+	}
 
 	/**
 	 * Add the woo_subshop meta value to the order
