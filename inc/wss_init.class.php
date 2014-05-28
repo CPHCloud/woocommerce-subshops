@@ -67,6 +67,10 @@ class wss_init extends wss {
 
 		add_filter('page_link', array('wss_init', 'alter_shop_pages_permalinks'), 999, 3);
 
+		add_filter('woocommerce_locate_template', array('wss_init', 'alter_locate_template'), 999, 3);
+
+		add_filter('wc_get_template_part', array('wss_init', 'alter_template_part'), 999, 3);
+
 
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
@@ -75,7 +79,7 @@ class wss_init extends wss {
 		the 'shop/{subshop_name}' slug to them.
 		*/
 		$alter_urls_hooks = array(
-			//'woocommerce_get_cart_url',
+			'woocommerce_get_cart_url',
 			'woocommerce_get_checkout_url',
 			'woocommerce_get_remove_url',
 			'woocommerce_add_to_cart_url',
@@ -109,6 +113,7 @@ class wss_init extends wss {
 		/* This...well...inits the subshop. Woohoo! */
 		self::init_subshop();
 
+		//define('WOO_SUBSHOPS_DEBUG', true);
 
 		// add_filter('wp_redirect', function(){
 		// 	$bt = debug_backtrace();
@@ -120,24 +125,39 @@ class wss_init extends wss {
 	}
 
 
+	function alter_template_part($template, $slug, $name){
+		if($shop = self::get_current_shop())
+			if($name and $tmpl = self::locate_template(array($slug.'-'.$name.'.php')))
+				return $tmpl;
+		return $template;
+	}
+
+	function alter_locate_template($template, $template_name, $template_path){
+		if($shop = self::get_current_shop())
+			if($tmpl = self::locate_template($template_name))
+				return $tmpl;
+		return $template;
+	}
+
 	/**
 	 * undocumented function
 	 *
 	 * @return void
 	 **/
 	function alter_shop_pages_permalinks($url, $page_id){
-	
 		if(!$shop = self::get_current_shop())
 			return $url;
 
 		if($key = array_search($page_id, $shop->pages)){
 			if($page = get_post($page_id) and $defpage = get_page(wc_get_page_id($key))) {
-				$url = self::url_inject($url, '/'.$defpage->post_name, '/'.$shop->slug);
+				if(stripos($url, '/'.$shop->slug) !== false)
+					$url = self::url_inject($url, '/'.$defpage->post_name, '/'.$shop->slug);
 			}
 		}
 		elseif(wc_get_page_id('shop') == $page_id){
-			$url = self::url_inject($url, '/', '/'.$shop->slug);			
+			$url = self::url_inject($url, '/', '/'.$shop->slug);
 		}
+
 
 		return $url;
 
@@ -266,10 +286,6 @@ class wss_init extends wss {
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
 
-				case 'woocommerce_add_to_cart_url':
-					$inject 		= '/checkout';
-					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
-					break;
 
 				case 'woocommerce_product_add_to_cart_url':
 					$add_vars 	= array('woo_subshop' => $shop->ID);
@@ -581,7 +597,11 @@ class wss_init extends wss {
 
 		/* Set request for 'product_cat' and 'product_tag' */
 		if($wpq->query_vars['product_cat'] or $wpq->query_vars['product_tag']){
-			$wpq->query_vars = self::extract($wpq->query_vars, array('product_tag', 'product_cat', 'page'));
+			$wpq->query_vars = self::extract($wpq->query_vars, array('product_tag', 'product_cat', 'page', 'orderby'));
+			$wpq->query_vars['post_type'] = 'product';
+		}
+		elseif($wpq->query_vars['s']){
+			$wpq->query_vars = self::extract($wpq->query_vars, array('s'));
 			$wpq->query_vars['post_type'] = 'product';
 		}
 		/* Set request for products */
@@ -628,11 +648,9 @@ class wss_init extends wss {
 			$wpq->query_vars['woo_subshop']
 			and
 			$wpq->query_vars['woo_subshop'] == $wpq->query_vars['name']
-			and
-			count($wpq->query_vars) <= 4
 			)
 		{
-			$wpq->query_vars 				= self::extract($wpq->query_vars, array('page'));
+			$wpq->query_vars 				= self::extract($wpq->query_vars, array('page', 'orderby'));
 			$wpq->query_vars['post_type'] 	= 'product';
 			$wpq->is_post_type_archive 		= true;
 			$wpq->is_single 				= false;

@@ -148,6 +148,21 @@ class wss_subshop {
 	}
 
 
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function get_layout_field($handle){
+		$els = $this->layout_fields;
+		foreach ($els as $key => $field){
+			if($field['handle'] == $handle){
+				return $field['value'];
+			}
+		}
+	}
+
+
 }
 
 

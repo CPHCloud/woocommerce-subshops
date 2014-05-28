@@ -24,8 +24,15 @@ class wss_admin extends wss_init {
 		/* Update the order meta with shop value */
 		add_action('woocommerce_checkout_update_order_meta', array('wss_admin', 'add_subshop_to_order'));
 
+		add_action( 'admin_head', function(){
+			global $pagenow, $post;
+			if($pagenow == 'post.php' and get_post_type($post) == 'woo_subshop'){
+				echo '<style>#minor-publishing{ display: none;}</style>';
+			}
+		});
 
 	}	
+
 
 	/**
 	 * Add the woo_subshop meta value to the order
@@ -66,9 +73,31 @@ class wss_admin extends wss_init {
 			'posts_per_page'=> -1
 		));
 
-		/* Register menues for each subshop */
-		foreach($shops as $shop)
-			register_nav_menu('wss-'.$shop->post_name.'-main', 'Main menu for subshop '.$shop->post_title);
+		/* Register menues and sidebars for each subshop */
+		foreach($shops as $shop){
+			$shop = new wss_subshop($shop);
+			if($shop->menu_locations){
+				foreach($shop->menu_locations as $loc){
+					register_nav_menu('wss-'.$shop->post_name.'-'.sanitize_title($loc['name']), $loc['description']);			
+				}
+			}
+			if($shop->sidebars){
+				foreach($shop->sidebars as $bar){
+
+					$args = array(
+						'name'          => $shop->post_title.' - '.$bar['name'],
+						'id'            => 'wss-'.$shop->name.'-'.sanitize_title($bar['name']),
+						'description'   => $bar['description'],
+						'class'         => 'wss-sidebar-widget',
+						'before_widget' => '<li id="%1" class="widget %2">',
+						'after_widget'  => '</li>',
+						'before_title'  => '<h2>',
+						'after_title'   => '</h2>'
+					);
+					register_sidebar( $args );
+				}
+			}
+		}
 
 	}
 
