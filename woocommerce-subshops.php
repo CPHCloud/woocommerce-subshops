@@ -3,7 +3,8 @@
 /*
 Plugin Name: Woocommerce | Subshops
 Description: Create subshops in the shop
-Text Domain: woo_subshops
+Text Domain: wss
+Domain Path: languages
 */
 
 $curr_shop = false;
@@ -16,5 +17,11 @@ unset($__woo_path);
 require('inc/wss.class.php');
 wss::load_plugins();
 wss::init();
+
+function curr_shop(){
+	global $curr_shop;
+	return $curr_shop;
+}
+
 
 ?>

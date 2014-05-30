@@ -27,6 +27,9 @@ class wss_init extends wss {
 	 **/
 	public static function init(){
 
+		/* Register the needed post types - woo_subshop */
+		add_action('init', array('wss_init', 'load_textdomain'), 1);
+
 		/* Loads */
 		add_action('admin_init', array('wss_init', 'admin_init'));
 		
@@ -120,6 +123,14 @@ class wss_init extends wss {
 
 	}
 
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function load_textdomain(){
+		load_plugin_textdomain('wss', false, 'woocommerce-subshops/languages/');
+	}
 
 	function alter_template_part($template, $slug, $name){
 		if($shop = self::get_current_shop())
@@ -804,8 +815,9 @@ class wss_init extends wss {
 
 		/* Register Subshop post type */
 		$labels = array(
-			'name'                => __( 'Shops', 'woo_subshops' ),
-			'singular_name'       => __( 'Shop', 'woo_subshops' )
+			'name'                => __( 'Shops', 'wss'),
+			'singular_name'       => __( 'Shop', 'wss'),
+			'menu_name'           => __( 'Shops', 'wss'),
 		);
 
 		$args = array(
