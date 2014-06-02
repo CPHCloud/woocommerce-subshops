@@ -74,7 +74,7 @@
 					0 => 'all',
 				),
 				'allow_null' => 1,
-				'multiple' => 0,
+				'multiple' => 1,
 			),
 		),
 		'location' => array (
