@@ -80,14 +80,15 @@ class wss_subshop {
 	 * @return void
 	 **/
 	function has_page($page_id){
-
+		
 		/* First we check if the */
 		if(in_array($page_id, $this->pages)){
 			return true;
 		}
-		elseif($shop = get_field('wss_in_subshop', $page_id)){
-			if($shop->ID == $this->ID)
-				return true;
+		elseif($shops = get_field('wss_in_subshop', $page_id)){
+			foreach($shops as $shop)
+				if($shop->ID == $this->ID)
+					return true;
 		}
 
 		return false;
