@@ -189,9 +189,9 @@ class wss {
 
 		if($shop = self::get_current_shop()){
 			$dirs[] = get_stylesheet_directory().'/subshops/'.$shop->post_name.'/';
-			$dirs[] = get_stylesheet_directory().'/subshops/';
+			$dirs[] = get_stylesheet_directory().'/subshops/_default/';
 			$dirs[] = get_template_directory().'/subshops/'.$shop->post_name.'/';
-			$dirs[] = get_template_directory().'/subshops/';
+			$dirs[] = get_template_directory().'/subshops/_default/';
 		}
 
 		$dirs 	= apply_filters('wss/locate_template_dirs', $dirs, $shop);
