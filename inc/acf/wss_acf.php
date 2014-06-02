@@ -61,7 +61,7 @@ class wss_acf extends wss_init {
                 require 'location_rules/acf_location_rule_js.php';
                 $js = ob_get_clean();
                 global $assets;
-                $assets->enqueue_js($js);
+                self::inlinewp()->enqueue_js($js);
 
                 if($rule['operator'] == "=="){
                     $match = $shop->has_product($options['post_id']);

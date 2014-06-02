@@ -15,8 +15,11 @@ out what's going on.
 
 */
 
+/* Require inlineWP for inline css and js */
+require_once('inlineWP/inlineWP.php');
+inlinewp('wss');
+		
 class wss {
-
 
 	/**
 	 * undocumented function
@@ -45,6 +48,10 @@ class wss {
 
 		/* Set this to true to output debug information. */
 		define('WOO_SUBSHOPS_DEBUG', false);
+	}
+
+	public static function inlinewp(){
+		return inlinewp('wss');
 	}
 
 	/**
