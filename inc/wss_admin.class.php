@@ -12,6 +12,8 @@ class wss_admin extends wss_init {
 	 **/
 	public static function init(){
 
+		add_action('plugins_loaded', array('wss_admin', 'acf_support'));
+
 		/* Sets up the admin screens and options */
 		add_action('init', array('wss_admin', 'setup_admin'), 1);
 
@@ -28,6 +30,19 @@ class wss_admin extends wss_init {
 		add_filter('acf/fields/flexible_content/no_value_message', array('wss_admin', 'alter_flexcontent_text'));
 
 	}	
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function acf_support(){
+		if(class_exists('acf')){
+			require(self::dir().'/inc/acf/wss_acf.php');
+			wss_acf::init();
+		}
+	}
+
 
 	/**
 	 * undocumented function
