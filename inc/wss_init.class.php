@@ -70,6 +70,7 @@ class wss_init extends wss {
 
 		add_filter('wc_get_template_part', array('wss_init', 'alter_template_part'), 999, 3);
 
+		add_filter('wp_get_nav_menu_items', array('wss_init', 'alter_menu_item_urls'), 999, 3);
 
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
@@ -144,6 +145,29 @@ class wss_init extends wss {
 			if($tmpl = self::locate_template($template_name))
 				return $tmpl;
 		return $template;
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_menu_item_urls($items, $menu, $args){
+
+		if(!$shop = wss::get_current_shop())
+			return $items;
+
+		
+		foreach($items as $k => &$item){
+			if($item->object == 'page' and $shop->has_page($item->object_id)){
+				$page = get_page($item->object_id);
+				$item->url = self::url_inject($item->url, '/'.$page->post_name, '/'.$shop->slug);
+			}
+		}
+		
+		return $items;
+
 	}
 
 	/**
@@ -292,7 +316,6 @@ class wss_init extends wss {
 					$inject 		= '/';
 					$prepend 	= '/'.self::get_shop_base().'/'.$shop->post_name;
 					break;
-
 
 				case 'woocommerce_product_add_to_cart_url':
 					$add_vars 	= array('woo_subshop' => $shop->ID);
