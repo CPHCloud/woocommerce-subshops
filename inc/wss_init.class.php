@@ -29,6 +29,7 @@ class wss_init extends wss {
 		
 		/* Hooks on init */		
 		add_action('init', array('wss_init', 'init_hooks'), 1);
+		add_action('plugins_loaded', array('wss_init', 'init_hooks'), 1);
 
 		/* Register the needed post types - woo_subshop */
 		add_action('init', array('wss_init', 'load_textdomain'), 1);
@@ -49,7 +50,7 @@ class wss_init extends wss {
 		add_filter('parse_request', array('wss_init', 'alter_request'), 2);
 
 		/* Filter the request to make sure we point to the right templates */
-		add_action('woocommerce_before_shop_loop', array('wss_init', 'alter_query'), 999);
+		add_action('woocommerce_product_query', array('wss_init', 'alter_query'), 9999, 2);
 
 		/* We need to change what templates are used for the subshops */
 		add_filter('template_include', array('wss_init', 'template_redirects'), 999);
@@ -136,9 +137,15 @@ class wss_init extends wss {
 	function init_hooks(){
 		if(!$shop = self::get_current_shop())
 			return;
+		$hook = current_filter();
 
-		do_action('wss/shop/init');
-		do_action('wss/shop-'.$shop->name.'/init', $shop);
+		if($hook == 'init'){
+			do_action('wss/shop/init');
+			do_action('wss/shop-'.$shop->name.'/init', $shop);
+		}
+		elseif($hook == 'plugins_loaded'){
+			do_action('wss/ready');
+		}
 	}
 
 	/**
@@ -583,40 +590,47 @@ class wss_init extends wss {
 	 *
 	 * @return void
 	 **/
-	function alter_query(){
+	function alter_query($query, $_this){
 		if(is_post_type_archive('product')){
-			global $wp_query;
+			
+			$mq = $_this->meta_query;
+
 			if($shop = self::get_current_shop()){
-				$query = array(
-					'meta_query' => array(
-						array(
-							'key' 		=> 'wss_in_shops',
-							'value' 	=> $shop->ID,
-							'compare' 	=> 'LIKE'
-						)
-					)
-				);
+				$mq[] = array(
+						'key' 		=> 'wss_in_shops',
+						'value' 	=> $shop->ID,
+						'compare' 	=> 'LIKE'
+					);
 			}
 			else{			
-				$query = array(
-					'meta_query' => array(
-						'relation' => 'OR',
-						array(
+				$mq[] = array(
 							'key' 		=> 'wss_in_shops',
-							'value' 	=> 'main',
+							'value' 	=> '"main"',
 							'compare'	=> 'LIKE'
-						),						
-						array(
+						);
+
+				$mq[] = array(
 							'key' 		=> 'wss_in_shops',
 							'compare' 	=> 'NOT EXISTS'
-						)
-					)
-				);
-			}
+						);
 
-			$query = array_merge_recursive($wp_query->query, $query);
-			query_posts($query);
-		}	
+				$mq['relation'] = 'OR';
+						
+			}
+			
+
+			// Set meta_query
+            $query->set('meta_query', $mq);
+
+            // Update the internal state of the calling object
+            $_this->meta_query = $mq;
+
+			do_action('wss/shop/product_query', $query, $_this);
+			if($shop)
+				do_action('wss/shop-'.$shop->name.'/product_query', $query, $_this);
+
+		}
+
 	}
 
 
