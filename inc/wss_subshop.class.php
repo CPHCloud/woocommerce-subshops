@@ -41,6 +41,7 @@ class wss_subshop {
 		}
 		
 		$this->slug = wss::get_shop_base().'/'.$this->object->post_name;
+		$this->url  = get_bloginfo('url').'/'.$this->slug;
 
 		$this->pages = array(
 			'cart' 		=> $this->get_page_id('cart'),
@@ -51,7 +52,6 @@ class wss_subshop {
 		//aprint($this);
 
 		$this->cached_fields = array();
-
 	}
 
 
@@ -103,16 +103,75 @@ class wss_subshop {
 	 *
 	 * @return void
 	 **/
-	function has_user($user_id){
+	function has_user($user_id = false){
+
+		if(!$user_id)
+			$user_id = get_current_user_id();
 
 		if($this->users){
-			foreach($this->users as $user) {
-				if($user['ID'] == $user_id)
+			foreach($this->users as $row) {
+				if($row['user']['ID'] == $user_id)
 					return true;
 			}
 		}
+		if($this->roles){
+			$user = get_userdata( $user_id );
+			/* $role is now our users role - duh */
+
+			foreach($this->roles as $row) {
+				if(in_array($row['role'], $user->roles))
+					return true;
+			}			
+		}
 
 		return false;
+	}
+
+
+	function has_privilege($privhandle, $user = false){
+		$return = false;
+		if(!$user)
+			$user = get_current_user_id();
+		$user = get_userdata($user);
+
+		$privs = apply_filters('wss/privileges', wss_admin::$privileges);
+		/* Do we settle this with a callback? */
+		if(isset($privs[$privhandle])){
+			if(is_callable($privs[$privhandle]['callback'])){
+				$callback = $privs[$privhandle]['callback'];
+				$args = array($privhandle, $user);
+				if(is_array($callback) and count($callback) == 2){
+					if(is_object($callback[0])){
+						$return = call_user_method_array($callback[1], $callback[0], $args);
+					}
+					else{
+						$function = implode('::', $callback);
+						$return   = call_user_func_array($function, $args);
+					}
+				}
+				elseif(is_string()){
+					$return = call_user_func_array($callback, $args);
+				}
+			}
+			else{
+				/* We're just comparing privs - no callback */
+				if($this->users){
+					foreach($this->users as $row) {
+						if($row['user']['ID'] == $user->ID and in_array($privhandle, $row['privileges']))
+							return true;
+					}
+				}
+				if($this->roles){
+					/* $role is now our users role - duh */
+					foreach($this->roles as $row) {
+						if($row['role'] == $user->roles[0] and in_array($privhandle, $row['privileges']))
+							return true;
+					}			
+				}
+
+			}
+		}
+		return $return;
 	}
 
 

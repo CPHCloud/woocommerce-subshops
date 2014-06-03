@@ -5,12 +5,17 @@
 */
 class wss_admin extends wss_init {
 	
+
+	public static $privileges;
+
 	/**
 	 * Inits the admin parts of the plugin
 	 *
 	 * @return void
 	 **/
 	public static function init(){
+
+		//self::add_privilege('Can everything', 'can_everything', array('wss_admin', 'priv_handler'));
 
 		add_action('plugins_loaded', array('wss_admin', 'acf_support'));
 
@@ -19,6 +24,11 @@ class wss_admin extends wss_init {
 
 		/* Hook the wss_in_shops field for products */
 		add_filter('acf/load_field/name=wss_in_shops', array('wss_admin', 'alter_field_in_shops'), 999, 3);
+
+		/* Hook the wss_in_shops field for products */
+		add_filter('acf/load_field/name=wss_users', array('wss_admin', 'alter_field_privileges'), 999, 3);
+		add_filter('acf/load_field/name=wss_roles', array('wss_admin', 'alter_field_privileges'), 999, 3);
+		add_filter('acf/load_field/name=wss_roles', array('wss_admin', 'alter_field_roles_name'), 999, 4);
 
 		/* Add shop field to order */
 		add_filter('woocommerce_create_order', array('wss_admin', 'order_add_subshop_field'), 999, 1);
@@ -29,7 +39,18 @@ class wss_admin extends wss_init {
 		add_action('admin_head', array('wss_admin', 'hide_publish_info'));
 		add_filter('acf/fields/flexible_content/no_value_message', array('wss_admin', 'alter_flexcontent_text'));
 
-	}	
+	}
+
+	public static function priv_handler($handle, $user){
+		return true;
+	}
+
+	function add_privilege($title, $handle, $callback){
+		self::$privileges[$handle] = array(
+				'title' 	=> $title,
+				'callback' 	=> $callback
+			);
+	}
 
 	/**
 	 * undocumented function
@@ -43,6 +64,37 @@ class wss_admin extends wss_init {
 		}
 	}
 
+
+	function alter_field_roles_name($field){
+
+		foreach($field['sub_fields'] as &$sfield){
+			if($sfield['name'] == 'role'){
+				global $wp_roles;
+				foreach ($wp_roles->roles as $role => $props) {
+					$sfield['choices'][$role] = $props['name'];
+				}
+				break;
+			}
+		}
+
+
+		return $field;
+	}
+
+	function alter_field_privileges($field){
+
+		foreach($field['sub_fields'] as &$sfield){
+			if($sfield['name'] == 'privileges'){
+				$privileges = apply_filters('wss/privileges', self::$privileges);
+				foreach($privileges as $handle => $p)
+					$privs[$handle] = $p['title'];
+				$sfield['choices'] = $privs;
+				break;
+			}
+		}
+
+		return $field;
+	}
 
 	/**
 	 * undocumented function

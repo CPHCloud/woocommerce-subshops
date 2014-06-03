@@ -26,6 +26,9 @@ class wss_init extends wss {
 	 * @return void
 	 **/
 	public static function init(){
+		
+		/* Hooks on init */		
+		add_action('init', array('wss_init', 'init_hooks'), 1);
 
 		/* Register the needed post types - woo_subshop */
 		add_action('init', array('wss_init', 'load_textdomain'), 1);
@@ -122,6 +125,20 @@ class wss_init extends wss {
 		// 	echo '</pre>';
 		// });
 
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function init_hooks(){
+		if(!$shop = self::get_current_shop())
+			return;
+
+		do_action('wss/shop/init');
+		do_action('wss/shop-'.$shop->name.'/init', $shop);
 	}
 
 	/**
@@ -420,8 +437,6 @@ class wss_init extends wss {
 		ajax request where the only way of tellign which shop is
 		needed is by using the GET var.
 		*/
-
-
 		if(!$shop = $_GET['woo_subshop']){
 			/* No GET var. We need to find the shopname by the url pattern. */
 			$shoppatt = '~^/'.self::get_shop_base().'/([^/]+)~';
