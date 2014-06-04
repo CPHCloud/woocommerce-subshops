@@ -205,9 +205,10 @@ class wss_init extends wss {
 
 		if($key = array_search($page_id, $shop->pages)){
 			if($page = get_post($page_id) and $defpage = get_page(wc_get_page_id($key))) {
-				if(stripos($url, '/'.$shop->slug) !== false)
+				if(stripos($url, '/'.$shop->slug) === false){
 					$url = self::url_inject($url, '/'.$defpage->post_name, '/'.$shop->slug);
-			}
+				}
+			}	
 		}
 		elseif(wc_get_page_id('shop') == $page_id){
 			$url = self::url_inject($url, '/', '/'.$shop->slug);
