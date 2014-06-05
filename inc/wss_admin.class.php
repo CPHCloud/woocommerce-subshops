@@ -302,10 +302,11 @@ class wss_admin extends wss_init {
 	 * @return void
 	 **/
 	function alter_field_in_shops($field){
-
 		if($shops = self::get(array('posts_per_page' => -1))){
-			foreach($shops as $shop)
+			$field['choices'] = array('main' => __('Main shop', 'wss'));
+			foreach($shops as $shop){
 				$field['choices'][$shop->ID] = $shop->post_title;
+			}
 		}
 		return $field;
 	}
