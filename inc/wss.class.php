@@ -157,7 +157,7 @@ class wss {
 			if(!is_array($args)){
 				$args = array();
 			}
-			$args = array_merge($args, array('post_type' => 'woo_subshop'));
+			$args = array_merge($args, array('post_type' => 'woo_subshop', 'post_status' => 'publish'));
 			return get_posts($args);
 		}
 
