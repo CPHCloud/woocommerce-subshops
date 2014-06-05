@@ -52,6 +52,9 @@ class wss_init extends wss {
 		/* Filter the request to make sure we point to the right templates */
 		add_action('woocommerce_product_query', array('wss_init', 'alter_query'), 9999, 2);
 
+		/* Filter orders */
+		add_filter('woocommerce_my_account_my_orders_query', array('wss_init', 'alter_account_order_query'), 999, 1);
+
 		/* We need to change what templates are used for the subshops */
 		add_filter('template_include', array('wss_init', 'template_redirects'), 999);
 
@@ -128,6 +131,39 @@ class wss_init extends wss {
 
 	}
 
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_account_order_query($q){
+
+		unset($q['meta_key'], $q['meta_value']);
+
+		$q['meta_query'][] = array(
+			'key' 	=> '_customer_user',
+			'value' => get_current_user_id()
+
+		);
+
+		if($shop = wss::get_current_shop()){
+			$q['meta_query'][] = array(
+					'key' 	=> 'woo_subshop',
+					'value' => $shop->ID
+				);
+
+		}
+		else{
+			$q['meta_query'][] = array(
+				'key' 		=> 'woo_subshop',
+				'compare' 	=> 'NOT EXISTS'
+			);
+		}
+
+		return $q;
+	}	
 
 	/**
 	 * undocumented function
@@ -824,7 +860,7 @@ class wss_init extends wss {
 			if($shops = self::get(array('posts_per_page' => '-1'))){
 				foreach($shops as $shop){
 					$shop = new wss_subshop($shop);
-					if($shop->has_page(get_queried_object_id())){
+					if(!$shop->has_page(get_queried_object_id())){
 						return self::get_404();
 					}
 				}
