@@ -108,9 +108,8 @@
 				'instructions' => 'Select the shops you want this product to appear in. If none is chosen, the shop will be assigned to the main shop by default.',
 				'choices' => array (
 					'main' => 'Main shop',
-					195 => 'Irma',
-					191 => 'Audi',
 					234 => 'Troelstrup',
+					191 => 'Audi',
 				),
 				'default_value' => 'main',
 				'allow_null' => 0,
