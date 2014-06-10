@@ -693,7 +693,7 @@ class wss_init extends wss {
 
 		/* Set request for 'product_cat' and 'product_tag' */
 		if($wpq->query_vars['product_cat'] or $wpq->query_vars['product_tag']){
-			$wpq->query_vars = self::extract($wpq->query_vars, array('product_tag', 'product_cat', 'page', 'orderby'));
+			$wpq->query_vars = self::extract($wpq->query_vars, array('product_tag', 'product_cat', 'paged', 'orderby'));
 			$wpq->query_vars['post_type'] = 'product';
 		}
 		elseif($wpq->query_vars['s']){
@@ -746,7 +746,7 @@ class wss_init extends wss {
 			$wpq->query_vars['woo_subshop'] == $wpq->query_vars['name']
 			)
 		{
-			$wpq->query_vars 				= self::extract($wpq->query_vars, array('page', 'orderby'));
+			$wpq->query_vars 				= self::extract($wpq->query_vars, array('paged', 'orderby'));
 			$wpq->query_vars['post_type'] 	= 'product';
 			$wpq->is_post_type_archive 		= true;
 			$wpq->is_single 				= false;
