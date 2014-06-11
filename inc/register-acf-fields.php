@@ -188,9 +188,7 @@
 						'name' => 'privileges',
 						'type' => 'select',
 						'column_width' => '',
-						'choices' => array (
-							'is_audi_admin' => 'AUDI shop - Administrator',
-						),
+						'choices' => NULL,
 						'default_value' => 'customer',
 						'allow_null' => 1,
 						'multiple' => 1,
@@ -243,9 +241,7 @@
 						'name' => 'privileges',
 						'type' => 'select',
 						'column_width' => '',
-						'choices' => array (
-							'is_audi_admin' => 'AUDI shop - Administrator',
-						),
+						'choices' => NULL,
 						'default_value' => '',
 						'allow_null' => 1,
 						'multiple' => 1,
