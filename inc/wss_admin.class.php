@@ -20,7 +20,7 @@ class wss_admin extends wss_init {
 		add_action('plugins_loaded', array('wss_admin', 'acf_support'));
 
 		/* Sets up the admin screens and options */
-		add_action('init', array('wss_admin', 'setup_admin'), 1);
+		add_action('plugins_loaded', array('wss_admin', 'setup_admin'), 1);
 
 		/* Hook the wss_in_shops field for products */
 		add_filter('acf/load_field/name=wss_in_shops', array('wss_admin', 'alter_field_in_shops'), 999, 3);
@@ -197,7 +197,7 @@ class wss_admin extends wss_init {
 	public static function register_acf_fields(){
 
 		if(WOO_SUBSHOPS_DEV){
-			self::export_acf_fields();
+			add_action('init', array('wss_admin', 'export_acf_fields'), 999);
 		}
 		else{
 			self::include_acf_fields();
@@ -211,8 +211,7 @@ class wss_admin extends wss_init {
 	 *
 	 * @return void
 	 **/
-	private static function include_acf_fields(){
-		
+	public static function include_acf_fields(){
 		if(file_exists(self::dir().'/inc/register-acf-fields.php'))
 			require(self::dir().'/inc/register-acf-fields.php');
 
@@ -229,7 +228,7 @@ class wss_admin extends wss_init {
 	 *
 	 * @return void
 	 **/
-	private static function export_acf_fields(){
+	public static function export_acf_fields(){
 		
 		/* The path to the file that registers the fields */
 		$file 	  = self::dir().'/inc/register-acf-fields.php';
