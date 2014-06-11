@@ -80,6 +80,26 @@ class wss {
 		return false;
 	}
 
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function set_var($key, $value){
+		$GLOBALS['__wss_'.$key] = $value;
+	}
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function get_var($key){
+		return $GLOBALS['__wss_'.$key];
+	}
+
+
 	/**
 	 * Retrieves the shop base slug as set in the admin area
 	 *

@@ -1,5 +1,5 @@
 <?php
-
+$__wss_is_exporting = false;
 /**
 * 
 */
@@ -229,7 +229,7 @@ class wss_admin extends wss_init {
 	 * @return void
 	 **/
 	public static function export_acf_fields(){
-		
+
 		/* The path to the file that registers the fields */
 		$file 	  = self::dir().'/inc/register-acf-fields.php';
 
@@ -244,6 +244,8 @@ class wss_admin extends wss_init {
 
 		/* Get fields */
 		if($acfs){
+			
+			self::set_var('is_exporting', true);
 
 			/* 
 			Fields where found.
@@ -290,6 +292,9 @@ class wss_admin extends wss_init {
 			$file = fopen($file, 'w+');
 			fwrite($file, $contents);
 			fclose($file);
+
+			self::set_var('is_exporting', false);
+
 		}
 	}
 
