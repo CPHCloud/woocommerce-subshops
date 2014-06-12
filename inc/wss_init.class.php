@@ -867,6 +867,18 @@ class wss_init extends wss {
 			}
 
 		}
+		elseif(is_product()){
+			/* Check if the main shop has access to this product */
+			$prod_id = get_queried_object_id();
+
+			if($in_shops = get_field('wss_in_shops', $prod_id)){
+				if(!in_array('main', $in_shops))
+					return self::get_404();
+
+			}
+
+
+		}
 
 		return $template;
 	}
