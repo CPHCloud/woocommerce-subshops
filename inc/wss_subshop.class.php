@@ -188,8 +188,11 @@ class wss_subshop {
 			if(!in_array($this->ID, $in_shops))
 				$return = false;
 
-		return apply_filters('wss/has_product', $return, $this);
-		
+		$return = apply_filters('wss/shop/has_product', $return, $product_id, $this);
+		$return = apply_filters('wss/shop-'.$this->name.'/has_product', $return, $product_id, $this);
+
+		return $return;
+
 	}
 
 
