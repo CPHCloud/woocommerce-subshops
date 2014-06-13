@@ -198,6 +198,38 @@ class wss_subshop {
 	 *
 	 * @return void
 	 **/
+	function get_products($args = array()){
+		$products 	= false;
+		$args 		= $this->parse_args($args);
+		$prods 		= get_posts($args);
+		return $prods;
+	}
+
+
+	function parse_args($args = array()){
+
+		$mandatory = array(
+			'post_type' 	=> 'product',
+			'meta_query' 	=> array(
+				array(
+					'key' 		=> 'wss_in_shops',
+					'value' 	=> '"'.$this->ID.'"',
+					'compare' 	=> 'LIKE'
+				)
+			)
+		);
+
+		$args = array_merge($args, $mandatory);
+
+		return $args;
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
 	function get_page_id($pagename){
 
 		if($page = $this->{$pagename.'_page'}){
