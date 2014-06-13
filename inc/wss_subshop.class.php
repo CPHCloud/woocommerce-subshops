@@ -182,14 +182,14 @@ class wss_subshop {
 	 **/
 	function has_product($product_id){
 
-		if($in_shops = get_field('wss_in_shops', $product_id)){
+		$return = true;
 
-			if(in_array($this->ID, $in_shops)){
-				return true;
-			}
-			return false;
-		}
-		return false;
+		if($in_shops = get_field('wss_in_shops', $product_id))
+			if(!in_array($this->ID, $in_shops))
+				$return = false;
+
+		return apply_filters('wss/has_product', $return, $this);
+		
 	}
 
 
