@@ -52,6 +52,9 @@ class wss_init extends wss {
 		/* Filter the request to make sure we point to the right templates */
 		add_action('woocommerce_product_query', array('wss_init', 'alter_query'), 9999, 2);
 
+		/* Filter related products query */
+		add_filter('woocommerce_product_related_posts_query', array('wss_init', 'alter_related_products_query'), 999, 1);
+
 		/* Filter orders */
 		add_filter('woocommerce_my_account_my_orders_query', array('wss_init', 'alter_account_order_query'), 999, 1);
 
@@ -131,6 +134,28 @@ class wss_init extends wss {
 
 	}
 
+
+	/**
+	 * Alters the SQL query in the get_related() method of the
+	 * WC_Product class so it excludes products not assigned to
+	 * the current shop. Function does nothing if we are not in
+	 * a subshop. 
+	 *
+	 * @return void
+	 **/
+	function alter_related_products_query($q){
+
+		$q['join']     .= ' INNER JOIN wp_postmeta tsm ON ( tsm.post_id = p.ID AND tsm.meta_key=\'wss_in_shops\')';
+		if($shop = wss::get_current_shop()){
+			$q['where'] 	= ' AND tsm.meta_value LIKE \'%"'.$shop->ID.'"%\' '.$q['where'];			
+		}
+		else{
+			$q['where'] 	= ' AND tsm.meta_value LIKE \'%"main"%\' '.$q['where'];
+		}
+
+		return $q;
+
+	}
 
 
 	/**
@@ -633,25 +658,26 @@ class wss_init extends wss {
 			$mq = $_this->meta_query;
 
 			if($shop = self::get_current_shop()){
-				$mq[] = array(
-						'key' 		=> 'wss_in_shops',
-						'value' 	=> $shop->ID,
-						'compare' 	=> 'LIKE'
-					);
+				array_unshift($mq, array(
+					'key' 		=> 'wss_in_shops',
+					'value' 	=> $shop->ID,
+					'compare' 	=> 'LIKE'
+				));
 			}
-			else{			
-				$mq[] = array(
-							'key' 		=> 'wss_in_shops',
-							'value' 	=> '"main"',
-							'compare'	=> 'LIKE'
-						);
+			else{
+				array_unshift($mq, array(
+					'key' 		=> 'wss_in_shops',
+					'value' 	=> '"main"',
+					'compare'	=> 'LIKE'
+				));
 
-				$mq[] = array(
-							'key' 		=> 'wss_in_shops',
-							'compare' 	=> 'NOT EXISTS'
-						);
-
-				$mq['relation'] = 'OR';
+				/*
+				We are altering the query again at SQL level to ensure
+				that we also look for products where the meta key does not
+				exist or is empty. This is crucial to do to prevent that products
+				become homeless.
+				*/
+				add_filter('posts_clauses', array('wss_init', 'alter_query_sql'), 999, 1);
 						
 			}
 			
@@ -668,6 +694,40 @@ class wss_init extends wss {
 
 		}
 
+	}
+
+
+	/**
+	 * This function makes sure that products who don't have the
+	 * meta key 'wss_in_shops' set or where it is empty will be assigned
+	 * to the main shop.
+	 *
+	 * @return void
+	 **/
+	function alter_query_sql($q){
+		/* Check if we are in a shop */
+		if(!$shop = self::get_current_shop()){
+			/* We are not. Let's do this. */
+			global $wpdb;
+
+			/* Do a LEFT JOIN where we check for the meta_key  */
+			$q['join'] .= ' LEFT JOIN '.$wpdb->postmeta.' AS tsq ON (wp_posts.ID = tsq.post_id AND tsq.meta_key = \'wss_in_shops\')';
+
+			/*
+			Find and replace the part of the query that holds
+			the check for the meta key 'wss_in_shops'. We replace
+			it with a custom query that still does the check but
+			includes NULL and empty values.
+			*/
+			$find 		= '('.$wpdb->postmeta.'.meta_key = \'wss_in_shops\' AND CAST('.$wpdb->postmeta.'.meta_value AS CHAR) LIKE \'%\"main\"%\')';
+			$replace 	= '( ('.$wpdb->postmeta.'.meta_key = \'wss_in_shops\' AND CAST('.$wpdb->postmeta.'.meta_value AS CHAR) LIKE \'%\"main\"%\') OR (tsq.post_id IS NULL) OR (tsq.meta_value = \'\'))';
+			$q['where'] = str_ireplace($find, $replace, $q['where']);
+
+			/* Lastly we remove this function from the filter to prevent any complications later on */
+			remove_filter('posts_clauses', array('wss_init', 'alter_query_sql'));
+
+		}
+		return $q;
 	}
 
 
