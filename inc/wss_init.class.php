@@ -53,7 +53,8 @@ class wss_init extends wss {
 		add_action('woocommerce_product_query', array('wss_init', 'alter_query'), 9999, 2);
 
 		/* Filter related products query */
-		add_filter('woocommerce_product_related_posts_query', array('wss_init', 'alter_related_products_query'), 999, 1);
+		add_filter('woocommerce_product_related_posts_query', array('wss_init', 'alter_related_products_sql'), 999, 1);
+
 
 		/* Filter orders */
 		add_filter('woocommerce_my_account_my_orders_query', array('wss_init', 'alter_account_order_query'), 999, 1);
@@ -143,15 +144,19 @@ class wss_init extends wss {
 	 *
 	 * @return void
 	 **/
-	function alter_related_products_query($q){
+	function alter_related_products_sql($q){
 
-		$q['join']     .= ' INNER JOIN wp_postmeta tsm ON ( tsm.post_id = p.ID AND tsm.meta_key=\'wss_in_shops\')';
+		$q['join']     .= ' LEFT JOIN wp_postmeta tsq ON ( tsq.post_id = p.ID AND tsq.meta_key=\'wss_in_shops\')';
 		if($shop = wss::get_current_shop()){
-			$q['where'] 	= ' AND tsm.meta_value LIKE \'%"'.$shop->ID.'"%\' '.$q['where'];			
+			$q['where'] 	= ' WHERE 1=1 AND tsq.meta_value LIKE \'%"'.$shop->ID.'"%\' '.str_ireplace('WHERE 1=1 ', '', $q['where']);
 		}
 		else{
-			$q['where'] 	= ' AND tsm.meta_value LIKE \'%"main"%\' '.$q['where'];
+			$q['where'] 	= ' WHERE 1=1 AND (tsq.post_id IS NULL OR tsq.meta_value = \'\' OR tsq.meta_value LIKE \'%"main"%\') '.str_ireplace('WHERE 1=1 ', '', $q['where']);
 		}
+
+		$q = apply_filters('wss/shop/related_products_sql', $q);
+		if($shop)
+			$q = apply_filters('wss/shop-'.$shop->name.'/related_products_sql', $q);
 
 		return $q;
 
