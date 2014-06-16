@@ -306,6 +306,10 @@ class wss_admin extends wss_init {
 	 * @return void
 	 **/
 	function alter_field_in_shops($field){
+
+		if(self::get_var('is_exporting') === true)
+			return $field;
+
 		if($shops = self::get(array('posts_per_page' => -1))){
 			$field['choices'] = array('main' => __('Main shop', 'wss'));
 			foreach($shops as $shop){
