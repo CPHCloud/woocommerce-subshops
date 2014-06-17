@@ -63,8 +63,10 @@ class wss_admin extends wss_init {
 
 
 	function alter_field_roles_name($field){
-		if(self::get_var('is_exporting') === true)
+
+		if(self::get_var('is_exporting') === true){
 			return $field;
+		}
 
 		foreach($field['sub_fields'] as &$sfield){
 			if($sfield['name'] == 'role'){
@@ -82,8 +84,9 @@ class wss_admin extends wss_init {
 
 	function alter_field_privileges($field){
 
-		if(self::get_var('is_exporting') === true)
+		if(self::get_var('is_exporting') === true){
 			return $field;
+		}
 
 		foreach($field['sub_fields'] as &$sfield){
 			if($sfield['name'] == 'privileges'){
