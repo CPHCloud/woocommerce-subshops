@@ -186,7 +186,8 @@
 						'name' => 'privileges',
 						'type' => 'select',
 						'column_width' => '',
-						'choices' => NULL,
+						'choices' => array (
+						),
 						'default_value' => 'customer',
 						'allow_null' => 1,
 						'multiple' => 1,
@@ -239,7 +240,8 @@
 						'name' => 'privileges',
 						'type' => 'select',
 						'column_width' => '',
-						'choices' => NULL,
+						'choices' => array (
+						),
 						'default_value' => '',
 						'allow_null' => 1,
 						'multiple' => 1,

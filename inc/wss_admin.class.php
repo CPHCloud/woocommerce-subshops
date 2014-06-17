@@ -30,9 +30,6 @@ class wss_admin extends wss_init {
 		add_filter('acf/load_field/name=wss_roles', array('wss_admin', 'alter_field_privileges'), 999, 3);
 		add_filter('acf/load_field/name=wss_roles', array('wss_admin', 'alter_field_roles_name'), 999, 4);
 
-		/* Add shop field to order */
-		add_filter('woocommerce_create_order', array('wss_admin', 'order_add_subshop_field'), 999, 1);
-
 		/* Update the order meta with shop value */
 		add_action('woocommerce_checkout_update_order_meta', array('wss_admin', 'add_subshop_to_order'));
 
@@ -66,6 +63,8 @@ class wss_admin extends wss_init {
 
 
 	function alter_field_roles_name($field){
+		if(self::get_var('is_exporting') === true)
+			return $field;
 
 		foreach($field['sub_fields'] as &$sfield){
 			if($sfield['name'] == 'role'){
@@ -82,6 +81,9 @@ class wss_admin extends wss_init {
 	}
 
 	function alter_field_privileges($field){
+
+		if(self::get_var('is_exporting') === true)
+			return $field;
 
 		foreach($field['sub_fields'] as &$sfield){
 			if($sfield['name'] == 'privileges'){
