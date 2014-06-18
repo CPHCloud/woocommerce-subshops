@@ -95,7 +95,12 @@ class wss_acf extends wss_init {
 
 
     function match_rule_user_has_shop($match, $rule, $options){
-        if($options['post_type'] == 'product'){
+
+            global $pagenow;
+            $showon = array('user-edit.php', 'profile.php');
+            if(!in_array($pagenow, $showon)){
+                return false;
+            }
 
             $shop = $rule['value'];
             if($shop = new wss_subshop($shop)){
@@ -112,7 +117,6 @@ class wss_acf extends wss_init {
 
             }
 
-        }
 
         return $match;
     }
