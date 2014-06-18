@@ -83,6 +83,21 @@ class wss_init extends wss {
 
 		add_filter('wp_get_nav_menu_items', array('wss_init', 'alter_menu_item_urls'), 999, 3);
 
+		foreach(self::$wc_pages as $page){
+			add_filter('woocommerce_get_' . $page . '_page_id', function($id){
+				
+				if($shop = self::get_current_shop()){
+					$filter 	= current_filter();
+					$search 	= array('woocommerce_get_', '_page_id');
+					$page 		= str_ireplace($search, '', $filter);
+					$id 		= $shop->get_page_id($page);
+				}
+
+				return $id;
+
+			}, 999, 9);
+		}
+
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
 		all the links and urls it produces are pointing to the main shop.
@@ -270,16 +285,16 @@ class wss_init extends wss {
 			return $url;
 
 		if($key = array_search($page_id, $shop->pages)){
-			if($page = get_post($page_id) and $defpage = get_page(wc_get_page_id($key))) {
+			if($page = get_post($page_id) and $defpage = get_page(get_option('woocommerce_'.$key.'_page_id'))) {
 				if(stripos($url, '/'.$shop->slug) === false){
-					$url = self::url_inject($url, '/'.$defpage->post_name, '/'.$shop->slug);
+					$url = self::url_inject($url, '/'.$page->post_name, '/'.$shop->slug);
+					$url = str_ireplace($page->post_name, $defpage->post_name, $url);
 				}
 			}	
 		}
 		elseif(wc_get_page_id('shop') == $page_id){
 			$url = self::url_inject($url, '/', '/'.$shop->slug);
 		}
-
 
 		return $url;
 
