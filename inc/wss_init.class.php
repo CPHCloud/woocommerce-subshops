@@ -84,18 +84,7 @@ class wss_init extends wss {
 		add_filter('wp_get_nav_menu_items', array('wss_init', 'alter_menu_item_urls'), 999, 3);
 
 		foreach(self::$wc_pages as $page){
-			add_filter('woocommerce_get_' . $page . '_page_id', function($id){
-				
-				if($shop = self::get_current_shop()){
-					$filter 	= current_filter();
-					$search 	= array('woocommerce_get_', '_page_id');
-					$page 		= str_ireplace($search, '', $filter);
-					$id 		= $shop->get_page_id($page);
-				}
-
-				return $id;
-
-			}, 999, 9);
+			add_filter('woocommerce_get_' . $page . '_page_id', array('wss_init', 'alter_wc_page_id'), 999, 9);
 		}
 
 		/*
@@ -147,6 +136,24 @@ class wss_init extends wss {
 		// 	print_r($bt[3]);
 		// 	echo '</pre>';
 		// });
+
+	}
+
+
+	/**
+	 * undocumented function
+	 *
+	 * @return void
+	 **/
+	function alter_wc_page_id($id){
+		if($shop = wss::get_current_shop()){
+			$filter 	= current_filter();
+			$search 	= array('woocommerce_get_', '_page_id');
+			$page 		= str_ireplace($search, '', $filter);
+			$id 		= $shop->get_page_id($page);
+		}
+
+		return $id;
 
 	}
 
