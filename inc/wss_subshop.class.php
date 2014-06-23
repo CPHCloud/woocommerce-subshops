@@ -74,6 +74,13 @@ class wss_subshop {
 		return false;
 	}
 
+	function empty_field_cache($field = false){
+		if($field and $this->cached_fields['wss_'.$field])
+			unset($this->cached_fields['wss_'.$field]);
+		else
+			$this->cached_fields = array();
+	}
+
 	/**
 	 * Checks if a page is assigned to this shop
 	 *
