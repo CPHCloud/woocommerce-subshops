@@ -217,6 +217,7 @@ class wss_admin extends wss_init {
 	 * @return void
 	 **/
 	public static function include_acf_fields(){
+
 		if(file_exists(self::dir().'/inc/register-acf-fields.php'))
 			require(self::dir().'/inc/register-acf-fields.php');
 

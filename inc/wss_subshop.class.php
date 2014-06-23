@@ -112,6 +112,7 @@ class wss_subshop {
 	 **/
 	function has_user($user_id = false){
 
+
 		if(!$user_id)
 			$user_id = get_current_user_id();
 
@@ -121,6 +122,7 @@ class wss_subshop {
 					return true;
 			}
 		}
+
 		if($this->roles){
 			$user = get_userdata( $user_id );
 			/* $role is now our users role - duh */
