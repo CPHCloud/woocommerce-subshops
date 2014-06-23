@@ -833,7 +833,7 @@ class wss_init extends wss {
 			$wpq->query_vars['woo_subshop'] == $wpq->query_vars['name']
 			)
 		{
-			$wpq->query_vars 				= self::extract($wpq->query_vars, array('paged', 'orderby'));
+			$wpq->query_vars 				= self::extract($wpq->query_vars, apply_filters('wss/allow_query_vars', array('paged', 'orderby'), $wpq));
 			$wpq->query_vars['post_type'] 	= 'product';
 			$wpq->is_post_type_archive 		= true;
 			$wpq->is_single 				= false;
