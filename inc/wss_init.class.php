@@ -288,15 +288,18 @@ class wss_init extends wss {
 	 * @return void
 	 **/
 	function alter_shop_pages_permalinks($url, $page_id){
+
 		if(!$shop = self::get_current_shop())
 			return $url;
 
 		if($key = array_search($page_id, $shop->pages)){
 			if($page = get_post($page_id) and $defpage = get_page(get_option('woocommerce_'.$key.'_page_id'))) {
+
 				if(stripos($url, '/'.$shop->slug) === false){
 					$url = self::url_inject($url, '/'.$page->post_name, '/'.$shop->slug);
 					$url = str_ireplace($page->post_name, $defpage->post_name, $url);
 				}
+
 			}	
 		}
 		elseif(wc_get_page_id('shop') == $page_id){

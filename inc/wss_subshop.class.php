@@ -40,8 +40,23 @@ class wss_subshop {
 			$this->name = $this->object->post_name;
 		}
 		
-		$this->slug = wss::get_shop_base().'/'.$this->object->post_name;
-		$this->url  = get_bloginfo('url').'/'.$this->slug;
+		/* Run this now */
+		$this->init();
+
+		/*
+		Hook the init function again later on
+		to make sure everything is loaded properly
+		*/
+		add_action('plugins_loaded', array($this, 'init'));
+
+		$this->cached_fields = array();
+	}
+
+
+	function init(){
+
+		$this->slug 	= wss::get_shop_base().'/'.$this->object->post_name;
+		$this->url  	= get_bloginfo('url').'/'.$this->slug;
 
 		$this->pages = array(
 			'cart' 		=> $this->get_page_id('cart'),
@@ -49,9 +64,6 @@ class wss_subshop {
 			'myaccount' => $this->get_page_id('myaccount')
 		);
 
-		//aprint($this);
-
-		$this->cached_fields = array();
 	}
 
 
