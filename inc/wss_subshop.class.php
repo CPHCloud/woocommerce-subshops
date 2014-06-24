@@ -76,11 +76,7 @@ class wss_subshop {
 		if(isset($this->object->$var)){
 			return $this->object->$var;
 		}
-		elseif($value = $this->cached_fields['wss_'.$var]){
-			return $value;
-		}
 		elseif($value = get_field('wss_'.$var, $this->ID)){
-			$this->cached_fields['wss_'.$var] = $value;
 			return $value;
 		}
 		return false;
