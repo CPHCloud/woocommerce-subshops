@@ -880,8 +880,19 @@ class wss_init extends wss {
 
 			/* We are in a shop */
 
+			/*
+			There are certain circumstances where
+			the private filter should not be used.
+			Eg. when a user is trying to reset her 
+			password. We need to check for this now.
+			*/			
+			$circumvent = false;
+			global $wp;
+			if(is_page(wc_get_page_id('myaccount')) and isset($wp->query_vars['lost-password']))
+				$circumvent = true;
+
 			/* Lets see if the user has access */
-			if($shop->private){
+			if(!$circumvent and $shop->private){
 				if(is_user_logged_in()){
 					if(!$shop->has_user(get_current_user_id()))
 						return self::locate_template('no-shop-access.php', true);
@@ -946,11 +957,22 @@ class wss_init extends wss {
 		/* Is this a page and NOT a subshop */
 		elseif(is_page()){
 
+			$q_page_id = get_queried_object_id();
+
+			/* Check wether this page is one of the wc_pages allowed */
+			$continue = true;
+			foreach (self::$wc_pages as $_key){
+				if(wc_get_page_id($_key) == $q_page_id){
+					$continue = false;
+					break;
+				}
+			}
+
 			/* Check if page is assigned to a subshop. Return 404 if true. */
-			if($shops = self::get(array('posts_per_page' => '-1'))){
+			if($continue and $shops = self::get(array('posts_per_page' => '-1'))){
 				foreach($shops as $shop){
 					$shop = new wss_subshop($shop);
-					if(!$shop->has_page(get_queried_object_id())){
+					if(!$shop->has_page($q_page_id)){
 						return self::get_404();
 					}
 				}
