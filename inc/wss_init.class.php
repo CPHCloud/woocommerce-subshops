@@ -918,9 +918,6 @@ class wss_init extends wss {
 				/* Is page? */
 				is_page()
 				and
-				/* Is not one of the allowed pages? */
-				!in_array(get_queried_object_id(), $allowed_pages)
-				and
 				/* Current shop has this page? */
 				!$shop->has_page(get_queried_object_id())
 				)
