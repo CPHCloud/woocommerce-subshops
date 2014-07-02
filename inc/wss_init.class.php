@@ -87,6 +87,7 @@ class wss_init extends wss {
 			add_filter('woocommerce_get_' . $page . '_page_id', array('wss_init', 'alter_wc_page_id'), 999, 9);
 		}
 
+
 		/*
 		Since Woocommerce does not know if we are in a subshop or not
 		all the links and urls it produces are pointing to the main shop.
@@ -167,6 +168,40 @@ class wss_init extends wss {
 	 * @return void
 	 **/
 	function alter_related_products_sql($q){
+
+
+		/* Fix broken Woocommerce SQL */
+		$clauses 	= explode('AND', $q['where']);
+		$last_key 	= array_search(end($clauses), $clauses);
+		$has_tags 	= apply_filters('woocommerce_product_related_posts_relate_by_tag', true);
+		$has_cats	= apply_filters('woocommerce_product_related_posts_relate_by_category', true);
+
+		if($has_cats and $has_tags){
+			$remove[] 	= $clauses[$last_key-3];
+			$remove[] 	= $clauses[$last_key-2];
+			$remove[] 	= $clauses[$last_key-1];
+			$new_clause = '('.$clauses[$last_key-3].' AND '.$clauses[$last_key-2].' AND '.$clauses[$last_key-1].')';
+		}
+		elseif($has_cats and !$has_tags){
+			$remove[] 	= $clauses[$last_key-1]; 
+			$remove[] 	= $clauses[$last_key]; 
+			$new_clause = '('.$clauses[$last_key-1].' AND '.$clauses[$last_key].')';
+		}
+		elseif(!$has_cats and $has_tags){
+			$remove[] 	= $clauses[$last_key-2]; 
+			$remove[] 	= $clauses[$last_key-1]; 
+			$new_clause = '('.$clauses[$last_key-2].' AND '.$clauses[$last_key-1].')';
+		}
+		else{
+			$new_clause = '';
+		}
+		
+
+		if($new_clause){
+			$q['where'] = implode('AND', $clauses);
+			$remove = implode('AND', $remove);
+			$q['where'] = str_ireplace($remove, $new_clause, $q['where']);
+		}
 
 		$q['join']     .= ' LEFT JOIN wp_postmeta tsq ON ( tsq.post_id = p.ID AND tsq.meta_key=\'wss_in_shops\')';
 		if($shop = wss::get_current_shop()){
