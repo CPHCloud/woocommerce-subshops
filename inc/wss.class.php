@@ -35,6 +35,11 @@ class wss {
 		wss_admin::init();
 		wss_init::init();
 
+		add_action('plugins_loaded', array($this, 'setup_dev_env'));
+
+	}
+
+	public function setup_dev_env(){
 		/*
 		This constant is used to check if the plugin is under development.
 		It is mainly used by the ACF plugin used to create the options panel.
@@ -48,6 +53,7 @@ class wss {
 
 		/* Set this to true to output debug information. */
 		define('WOO_SUBSHOPS_DEBUG', false);
+
 	}
 
 	public static function inlinewp(){
@@ -152,7 +158,6 @@ class wss {
 	 * @return mixed - the option value
 	 **/
 	public static function get_option($option){
-
 		return get_field('wss_'.$option, 'option');
 	}
 	
