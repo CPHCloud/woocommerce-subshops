@@ -35,7 +35,7 @@ class wss {
 		wss_admin::init();
 		wss_init::init();
 
-		add_action('plugins_loaded', array($this, 'setup_dev_env'));
+		add_action('plugins_loaded', array('wss', 'setup_dev_env'), 1);
 
 	}
 

@@ -29,10 +29,10 @@ class wss_init extends wss {
 		
 		/* Hooks on init */		
 		add_action('init', array('wss_init', 'init_hooks'), 1);
-		add_action('plugins_loaded', array('wss_init', 'init_hooks'), 1);
+		add_action('plugins_loaded', array('wss_init', 'init_hooks'), 2);
 
 		/* Register the needed post types - woo_subshop */
-		add_action('init', array('wss_init', 'load_textdomain'), 1);
+		add_action('init', array('wss_init', 'load_textdomain'), 2);
 
 		/* Loads */
 		add_action('admin_init', array('wss_init', 'admin_init'));
