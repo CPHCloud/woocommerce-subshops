@@ -17,10 +17,10 @@ class wss_admin extends wss_init {
 
 		//self::add_privilege('Can everything', 'can_everything', array('wss_admin', 'priv_handler'));
 
-		add_action('plugins_loaded', array('wss_admin', 'acf_support'));
+		add_action('plugins_loaded', array('wss_admin', 'acf_support'), 2);
 
 		/* Sets up the admin screens and options */
-		add_action('plugins_loaded', array('wss_admin', 'setup_admin'), 1);
+		add_action('plugins_loaded', array('wss_admin', 'setup_admin'), 2);
 
 		/* Hook the wss_in_shops field for products */
 		add_filter('acf/load_field/name=wss_in_shops', array('wss_admin', 'alter_field_in_shops'), 999, 3);
