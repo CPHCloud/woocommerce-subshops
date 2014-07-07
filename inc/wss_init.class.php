@@ -968,6 +968,7 @@ class wss_init extends wss {
 			theme.
 			*/
 			if(is_page()){
+
 				/* Get any page template */
 				$templates = array('page-'.get_query_var('pagename').'.php', 'page.php');
 				if($found = self::locate_template($templates))
@@ -1000,11 +1001,12 @@ class wss_init extends wss {
 				}
 			}
 
+
 			/* Check if page is assigned to a subshop. Return 404 if true. */
 			if($continue and $shops = self::get(array('posts_per_page' => '-1'))){
 				foreach($shops as $shop){
 					$shop = new wss_subshop($shop);
-					if(!$shop->has_page($q_page_id)){
+					if($shop->has_page($q_page_id)){
 						return self::get_404();
 					}
 				}
