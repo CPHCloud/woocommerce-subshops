@@ -86,6 +86,20 @@
 					'order_no' => 0,
 					'group_no' => 0,
 				),
+				array (
+					'param' => 'page_type',
+					'operator' => '!=',
+					'value' => 'front_page',
+					'order_no' => 1,
+					'group_no' => 0,
+				),
+				array (
+					'param' => 'post_type',
+					'operator' => '!=',
+					'value' => 'posts_page',
+					'order_no' => 2,
+					'group_no' => 0,
+				),
 			),
 		),
 		'options' => array (
