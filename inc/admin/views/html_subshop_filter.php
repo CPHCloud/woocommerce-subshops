@@ -1,7 +1,5 @@
 <?php
-
 $shops = wss::get(array('posts_per_page' => -1));
-
 ?>
 
 <?php if($shops): ?>
