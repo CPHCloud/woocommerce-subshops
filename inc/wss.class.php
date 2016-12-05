@@ -127,13 +127,17 @@ class wss {
 	 **/
 	public static function load_plugins(){
 
+		include_once( ABSPATH . 'wp-admin/includes/plugin.php');
+
+		if(is_plugin_active('advanced-custom-fields-pro/acf.php'))
+			return false;
+
 		/* Check if the needed plugins are already loaded */
 		$deps[] 	= 'advanced-custom-fields/acf.php';
 		$deps[] 	= 'acf-options-page/acf-options-page.php';
 		$deps[] 	= 'acf-flexible-content/acf-flexible-content.php';
 		$deps[] 	= 'acf-repeater/acf-repeater.php';
 
-		include_once( ABSPATH . 'wp-admin/includes/plugin.php');
 		foreach($deps as $dep){
 			if(!is_plugin_active($dep)){
 				if($dep == 'advanced-custom-fields/acf.php')
