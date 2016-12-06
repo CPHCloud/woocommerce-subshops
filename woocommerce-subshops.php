@@ -1,5 +1,18 @@
 <?php
 
+$active_plugins = get_option('active_plugins');
+if(
+    !(
+    	in_array('woocommerce/woocommerce.php', $active_plugins)
+    
+    and
+    	
+    	in_array('advanced-custom-fields-pro/acf.php', $active_plugins)
+    )
+)
+	return;
+
+
 /*
 Plugin Name: Woocommerce | Subshops
 Description: Create subshops in the shop
