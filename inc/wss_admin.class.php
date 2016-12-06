@@ -36,6 +36,8 @@ class wss_admin extends wss_init {
 		add_action('admin_head', array('wss_admin', 'hide_publish_info'));
 		add_filter('acf/fields/flexible_content/no_value_message', array('wss_admin', 'alter_flexcontent_text'));
 
+		add_action('acf/include_fields', 'wss_admin::include_field_groups', 20, 1);
+
 	}
 
 	public static function priv_handler($handle, $user){
@@ -155,9 +157,6 @@ class wss_admin extends wss_init {
 	        'capability' 	=> 'manage_options'
 	    ));
 
-		/* Register all the fields! */
-		self::register_acf_fields();
-
 		/* Get published subshops */
 		$shops = get_posts(array(
 			'post_type' 	=> 'woo_subshop',
@@ -216,10 +215,21 @@ class wss_admin extends wss_init {
 	 *
 	 * @return void
 	 **/
-	public static function include_acf_fields(){
+	public static function include_field_groups(){
 
-		if(file_exists(self::dir().'/inc/register-acf-fields.php'))
-			require(self::dir().'/inc/register-acf-fields.php');
+		$path 	= dirname(__FILE__).'/acf/field_groups/';
+		$files 	= glob($path.'/group_*.php');
+
+		if(!$files)
+			return;
+
+		foreach($files as $file){
+			$group = include $file;
+			if(!is_array($group))
+				continue;
+			json_encode($group);
+			acf_add_local_field_group($group);
+		}
 
 	}
 
